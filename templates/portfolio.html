@@ -33,6 +33,13 @@
                 {% endfor %}
             </tbody>
         </table>
+        <div class="charts">
+            <h2>Charts</h2>
+            <p>Stock-wise Chart:</p>
+            <img src="{{ url_for('stock_chart') }}" alt="Stock-wise Chart">
+            <p>Sector-wise Chart:</p>
+            <img src="{{ url_for('sector_chart') }}" alt="Sector-wise Chart">
+        </div>
     </div>
 </body>
 </html>
