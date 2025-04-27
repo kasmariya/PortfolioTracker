@@ -1,7 +1,21 @@
-{% extends "layout.html" %}
-{% block content %}
-<h1>Portfolio Distribution</h1>
-<div style="text-align:center;">
-    <img src="{{ url_for('chart') }}" alt="Portfolio Chart">
-</div>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart View</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Chart View</h1>
+        <div class="charts">
+            <h2>Stock-wise Distribution</h2>
+            <img src="{{ url_for('stock_chart') }}" alt="Stock-wise Chart">
+
+            <h2>Sector-wise Distribution</h2>
+            <img src="{{ url_for('sector_chart') }}" alt="Sector-wise Chart">
+        </div>
+    </div>
+</body>
+</html>
