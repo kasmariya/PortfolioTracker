@@ -5,7 +5,7 @@ import io
 
 app = Flask(__name__)
 
-# Updated portfolio with stock symbols and quantities
+# Updated portfolio with stock symbols, quantities, and buy price
 portfolio = {
     'TATAMOTORS.NS': (600, 740.42),
     'JIOFIN.NS': (1550, 228.49),
@@ -28,15 +28,24 @@ def fetch_live_price(stock_symbol):
     else:
         return None
 
-# Function to calculate updated portfolio value
+# Function to calculate updated portfolio with added columns
 def get_portfolio():
     updated_portfolio = []
-    for stock, (quantity, price) in portfolio.items():
+    for stock, (quantity, buy_price) in portfolio.items():
+        current_price = fetch_live_price(stock)
+        if current_price is not None:
+            value = round(quantity * current_price, 2)
+            gain_loss = round(value - (quantity * buy_price), 2)
+        else:
+            current_price = gain_loss = value = None
+
         updated_portfolio.append({
-            'stock': stock.replace(".NS", ""),
+            'ticker': stock.replace(".NS", ""),
             'quantity': quantity,
-            'price': price,
-            'total_value': round(quantity * price, 2)
+            'buy_price': buy_price,
+            'current_price': current_price,
+            'value': value,
+            'gain_loss': gain_loss,
         })
     return updated_portfolio
 
@@ -61,8 +70,8 @@ def health_score():
 @app.route('/chart.png')
 def chart():
     data = get_portfolio()
-    labels = [item['stock'] for item in data]
-    sizes = [item['total_value'] for item in data]
+    labels = [item['ticker'] for item in data]
+    sizes = [item['value'] for item in data]
 
     fig, ax = plt.subplots()
     ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=140, shadow=True)
