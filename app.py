@@ -5,11 +5,21 @@ import io
 
 app = Flask(__name__)
 
-portfolio_data = [
-    {"stock": "TATAMOTORS.NS", "quantity": 10},
-    {"stock": "TATAPOWER.NS", "quantity": 15},
-]
+# Updated portfolio with stock symbols and quantities
+portfolio = {
+    'TATAMOTORS.NS': (600, 740.42),
+    'JIOFIN.NS': (1550, 228.49),
+    'TCS.NS': (79, 3472.58),
+    'TATAPOWER.NS': (550, 318.05),
+    'BEL.NS': (580, 249.54),         
+    'IRCTC.NS': (225, 715.00),
+    'TITAN.NS': (50, 3016.05),
+    'MOTHERSON.NS': (1000, 124.14),
+    'HINDUNILVR.NS': (50, 2178.46),  
+    'BAJAJHFL.NS': (690, 114.77)     
+}
 
+# Function to fetch live price of stock from Yahoo Finance
 def fetch_live_price(stock_symbol):
     ticker = yf.Ticker(stock_symbol)
     todays_data = ticker.history(period='1d')
@@ -18,33 +28,36 @@ def fetch_live_price(stock_symbol):
     else:
         return None
 
+# Function to calculate updated portfolio value
 def get_portfolio():
     updated_portfolio = []
-    for item in portfolio_data:
-        price = fetch_live_price(item["stock"])
-        total_value = round(item["quantity"] * price, 2) if price else 0
+    for stock, (quantity, price) in portfolio.items():
         updated_portfolio.append({
-            "stock": item["stock"].replace(".NS", ""),
-            "quantity": item["quantity"],
-            "price": price if price else "N/A",
-            "total_value": total_value
+            'stock': stock.replace(".NS", ""),
+            'quantity': quantity,
+            'price': price,
+            'total_value': round(quantity * price, 2)
         })
     return updated_portfolio
 
+# Route for portfolio
 @app.route('/')
-def portfolio():
+def portfolio_view():
     data = get_portfolio()
     return render_template('portfolio.html', portfolio=data)
 
+# Route for chart view
 @app.route('/chart')
 def chart_view():
     return render_template('chart.html')
 
+# Route for health score view
 @app.route('/health')
 def health_score():
-    score = 85
+    score = 85  # Example score
     return render_template('health.html', score=score)
 
+# Route for portfolio pie chart
 @app.route('/chart.png')
 def chart():
     data = get_portfolio()
