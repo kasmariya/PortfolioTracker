@@ -92,29 +92,34 @@ def generate_sector_chart():
     plt.close()
     return img
 
-# Route for portfolio
+# Route for portfolio (unchanged)
 @app.route('/')
 def portfolio_view():
     data = get_portfolio()
     return render_template('portfolio.html', portfolio=data)
 
+# Route for chart view (updated to include stock and sector charts)
+@app.route('/charts')
+def chart_view():
+    return render_template('chart.html')
+
+# Route for health score view (unchanged)
+@app.route('/health')
+def health_score():
+    score = 85  # Example score
+    return render_template('health.html', score=score)
+
 # Route for stock-wise chart
-@app.route('/stock-chart.png')
+@app.route('/chart/stock-chart.png')
 def stock_chart():
     img = generate_stock_chart()
     return send_file(img, mimetype='image/png')
 
 # Route for sector-wise chart
-@app.route('/sector-chart.png')
+@app.route('/chart/sector-chart.png')
 def sector_chart():
     img = generate_sector_chart()
     return send_file(img, mimetype='image/png')
-
-# Route for health score view
-@app.route('/health')
-def health_score():
-    score = 85  # Example score
-    return render_template('health.html', score=score)
 
 if __name__ == '__main__':
     app.run(debug=True)
