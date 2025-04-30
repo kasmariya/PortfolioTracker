@@ -24,6 +24,7 @@ portfolio = {
 CACHE_FILE = 'financials_cache.pkl'
 financials_cache = {}
 
+# Load/Save Cache
 def load_cache():
     global financials_cache
     if os.path.exists(CACHE_FILE):
@@ -34,6 +35,7 @@ def save_cache():
     with open(CACHE_FILE, 'wb') as f:
         pickle.dump(financials_cache, f)
 
+# Manual ROE Calculation
 def calculate_manual_roe(ticker):
     try:
         if ticker not in financials_cache:
@@ -70,8 +72,154 @@ def calculate_manual_roe(ticker):
         print(f"Error calculating manual ROE for {ticker}: {e}")
         return None
 
-# Remaining code stays the same ...
+# Core Functions
+def get_portfolio_data():
+    ticker_values = {}
+    sector_values = defaultdict(float)
+    rows = []
+    total_cost = 0.0
+    total_value = 0.0
 
+    for ticker, (qty, buy_price) in portfolio.items():
+        stock = yf.Ticker(ticker)
+        hist = stock.history(period="2d")
+        info = stock.info
+
+        if not hist.empty and len(hist) >= 1:
+            current_price = hist['Close'].iloc[-1]
+            market_value = current_price * qty
+            cost_value = buy_price * qty
+            gain_loss = market_value - cost_value
+
+            total_cost += cost_value
+            total_value += market_value
+
+            sector = info.get("sector", "Unknown")
+            ticker_values[ticker] = market_value
+            sector_values[sector] += market_value
+
+            rows.append({
+                'ticker': ticker,
+                'quantity': qty,
+                'buy_price': buy_price,
+                'current_price': current_price,
+                'value': market_value,
+                'gain_loss': gain_loss
+            })
+
+    net_gain = total_value - total_cost
+    return rows, ticker_values, sector_values, total_cost, net_gain
+
+def create_distribution_charts(ticker_values, sector_values):
+    labels = list(ticker_values.keys())
+    sizes = list(ticker_values.values())
+    plt.figure(figsize=(6,6))
+    plt.pie(sizes, labels=labels, autopct='%1.1f%%')
+    plt.title('Stock-wise Portfolio')
+    plt.savefig('static/stock_distribution.png')
+    plt.close()
+
+    labels = list(sector_values.keys())
+    sizes = list(sector_values.values())
+    plt.figure(figsize=(6,6))
+    plt.pie(sizes, labels=labels, autopct='%1.1f%%')
+    plt.title('Sector-wise Portfolio')
+    plt.savefig('static/sector_distribution.png')
+    plt.close()
+
+def fetch_fundamentals():
+    rows = []
+    for ticker in portfolio.keys():
+        stock = yf.Ticker(ticker)
+        info = stock.info
+
+        roe_value = info.get('returnOnEquity')
+        if roe_value is None:
+            roe_value = calculate_manual_roe(ticker)
+        else:
+            roe_value = roe_value * 100
+
+        div_yield = info.get('dividendYield')
+        pe = info.get('trailingPE')
+        pb = info.get('priceToBook')
+        debt_to_equity = info.get('debtToEquity')
+        growth_rate = info.get('earningsQuarterlyGrowth')
+        peg = info.get('pegRatio')
+
+        if peg is None and pe and growth_rate and growth_rate != 0:
+            peg = pe / (growth_rate * 100)
+
+        rows.append({
+            'Stock': ticker,
+            'PEG': round(peg,2) if peg else 'N/A',
+            'ROE': round(roe_value,2) if roe_value else 'N/A',
+            'Debt/Equity': round(debt_to_equity/100,2) if debt_to_equity else 'N/A',
+            'P/E': round(pe,2) if pe else 'N/A',
+            'P/B': round(pb,2) if pb else 'N/A',
+            'Dividend Yield': round(div_yield*100,2) if div_yield else 'N/A'
+        })
+    return pd.DataFrame(rows)
+
+def evaluate_health(fund_df):
+    verdicts = []
+    for _, row in fund_df.iterrows():
+        score = 0
+        notes = []
+
+        if isinstance(row['PEG'], (int, float)) and row['PEG'] <= 1.5: score +=1
+        else: notes.append('High PEG')
+        if isinstance(row['ROE'], (int, float)) and row['ROE'] >= 15: score +=1
+        else: notes.append('Low ROE')
+        if isinstance(row['Debt/Equity'], (int, float)) and row['Debt/Equity'] <= 0.5: score +=1
+        else: notes.append('High Debt')
+        if isinstance(row['P/E'], (int, float)) and row['P/E'] <= 15: score +=1
+        else: notes.append('High P/E')
+        if isinstance(row['P/B'], (int, float)) and row['P/B'] <= 1.5: score +=1
+        else: notes.append('High P/B')
+        if isinstance(row['Dividend Yield'], (int, float)) and row['Dividend Yield'] >= 2: score +=1
+
+        verdict = '✅ Healthy' if score>=4 else '⚠️ Needs Attention' if score>=2 else '❌ Weak'
+        verdicts.append({'Stock': row['Stock'], 'Score': score, 'Verdict': verdict, 'Notes': ", ".join(notes)})
+    return pd.DataFrame(verdicts)
+
+def create_health_chart(health_df):
+    counts = health_df['Verdict'].value_counts()
+    labels = [f"{v} ({counts[v]})" for v in counts.index]
+    sizes = [counts[v] for v in counts.index]
+    colors = ["#28a745" if "Healthy" in v else "#ffc107" if "Attention" in v else "#dc3545" for v in counts.index]
+
+    plt.figure(figsize=(6,6))
+    plt.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%')
+    plt.title('Portfolio Health Summary')
+    plt.savefig('static/health_distribution.png')
+    plt.close()
+
+# Routes
+@app.route('/')
+@app.route('/portfolio')
+def portfolio_view():
+    rows, ticker_vals, sector_vals, total_cost, net_gain = get_portfolio_data()
+    return render_template('portfolio.html', rows=rows, total_cost=total_cost, net_gain=net_gain)
+
+@app.route('/charts')
+def charts_view():
+    rows, ticker_vals, sector_vals, _, _ = get_portfolio_data()
+    create_distribution_charts(ticker_vals, sector_vals)
+    return render_template('charts.html')
+
+@app.route('/fundamentals')
+def fundamentals_view():
+    fund_df = fetch_fundamentals()
+    return render_template('fundamentals.html', fundamentals=fund_df.to_dict('records'))
+
+@app.route('/health')
+def health_view():
+    fund_df = fetch_fundamentals()
+    health_df = evaluate_health(fund_df)
+    create_health_chart(health_df)
+    return render_template('health.html', health=health_df.to_dict('records'))
+
+# ✅ Load cache once at startup
 load_cache()
 
 if __name__ == '__main__':
