@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 import pickle
 import os
-import time
 
 app = Flask(__name__)
 
@@ -35,25 +34,6 @@ def load_cache():
 def save_cache():
     with open(CACHE_FILE, 'wb') as f:
         pickle.dump(financials_cache, f)
-
-# Retry helpers
-def safe_get_info(ticker, retries=3, delay=1):
-    for _ in range(retries):
-        try:
-            return yf.Ticker(ticker).info
-        except Exception as e:
-            print(f"[INFO ERROR] Retrying {ticker}: {e}")
-            time.sleep(delay)
-    return {}
-
-def safe_get_history(ticker, retries=3, delay=1):
-    for _ in range(retries):
-        try:
-            return yf.Ticker(ticker).history(period="2d")
-        except Exception as e:
-            print(f"[HISTORY ERROR] Retrying {ticker}: {e}")
-            time.sleep(delay)
-    return pd.DataFrame()
 
 # Manual ROE Calculation
 def calculate_manual_roe(ticker):
@@ -101,81 +81,92 @@ def get_portfolio_data():
     total_value = 0.0
 
     for ticker, (qty, buy_price) in portfolio.items():
-        hist = safe_get_history(ticker)
-        info = safe_get_info(ticker)
+        try:
+            stock = yf.Ticker(ticker)
+            hist = stock.history(period="2d")
+            info = stock.info
 
-        if not hist.empty and len(hist) >= 1:
-            current_price = hist['Close'].iloc[-1]
-            market_value = current_price * qty
-            cost_value = buy_price * qty
-            gain_loss = market_value - cost_value
+            if not hist.empty and len(hist) >= 1:
+                current_price = hist['Close'].iloc[-1]
+                market_value = current_price * qty
+                cost_value = buy_price * qty
+                gain_loss = market_value - cost_value
 
-            total_cost += cost_value
-            total_value += market_value
+                total_cost += cost_value
+                total_value += market_value
 
-            sector = info.get("sector", "Unknown")
-            ticker_values[ticker] = market_value
-            sector_values[sector] += market_value
+                sector = info.get("sector", "Unknown")
+                ticker_values[ticker] = market_value
+                sector_values[sector] += market_value
 
-            rows.append({
-                'ticker': ticker,
-                'quantity': qty,
-                'buy_price': buy_price,
-                'current_price': current_price,
-                'value': market_value,
-                'gain_loss': gain_loss
-            })
+                rows.append({
+                    'ticker': ticker,
+                    'quantity': qty,
+                    'buy_price': buy_price,
+                    'current_price': current_price,
+                    'value': market_value,
+                    'gain_loss': gain_loss
+                })
+        except Exception as e:
+            print(f"Error retrieving data for {ticker}: {e}")
 
     net_gain = total_value - total_cost
     return rows, ticker_values, sector_values, total_cost, net_gain
 
 def create_distribution_charts(ticker_values, sector_values):
-    labels = list(ticker_values.keys())
-    sizes = list(ticker_values.values())
-    plt.figure(figsize=(6,6))
-    plt.pie(sizes, labels=labels, autopct='%1.1f%%')
-    plt.title('Stock-wise Portfolio')
-    plt.savefig('static/stock_distribution.png')
-    plt.close()
+    try:
+        labels = list(ticker_values.keys())
+        sizes = list(ticker_values.values())
+        plt.figure(figsize=(6,6))
+        plt.pie(sizes, labels=labels, autopct='%1.1f%%')
+        plt.title('Stock-wise Portfolio')
+        plt.savefig('static/stock_distribution.png')
+        plt.close()
 
-    labels = list(sector_values.keys())
-    sizes = list(sector_values.values())
-    plt.figure(figsize=(6,6))
-    plt.pie(sizes, labels=labels, autopct='%1.1f%%')
-    plt.title('Sector-wise Portfolio')
-    plt.savefig('static/sector_distribution.png')
-    plt.close()
+        labels = list(sector_values.keys())
+        sizes = list(sector_values.values())
+        plt.figure(figsize=(6,6))
+        plt.pie(sizes, labels=labels, autopct='%1.1f%%')
+        plt.title('Sector-wise Portfolio')
+        plt.savefig('static/sector_distribution.png')
+        plt.close()
+    except Exception as e:
+        print(f"Error creating charts: {e}")
 
 def fetch_fundamentals():
     rows = []
     for ticker in portfolio.keys():
-        info = safe_get_info(ticker)
+        try:
+            stock = yf.Ticker(ticker)
+            info = stock.info
 
-        roe_value = info.get('returnOnEquity')
-        if roe_value is None:
-            roe_value = calculate_manual_roe(ticker)
-        else:
-            roe_value = roe_value * 100
+            roe_value = info.get('returnOnEquity')
+            if roe_value is None:
+                roe_value = calculate_manual_roe(ticker)
+            else:
+                roe_value = roe_value * 100
 
-        div_yield = info.get('dividendYield')
-        pe = info.get('trailingPE')
-        pb = info.get('priceToBook')
-        debt_to_equity = info.get('debtToEquity')
-        growth_rate = info.get('earningsQuarterlyGrowth')
-        peg = info.get('pegRatio')
+            div_yield = info.get('dividendYield')
+            pe = info.get('trailingPE')
+            pb = info.get('priceToBook')
+            debt_to_equity = info.get('debtToEquity')
+            growth_rate = info.get('earningsQuarterlyGrowth')
+            peg = info.get('pegRatio')
 
-        if peg is None and pe and growth_rate and growth_rate != 0:
-            peg = pe / (growth_rate * 100)
+            if peg is None and pe and growth_rate and growth_rate != 0:
+                peg = pe / (growth_rate * 100)
 
-        rows.append({
-            'Stock': ticker,
-            'PEG': round(peg,2) if peg else 'N/A',
-            'ROE': round(roe_value,2) if roe_value else 'N/A',
-            'Debt/Equity': round(debt_to_equity/100,2) if debt_to_equity else 'N/A',
-            'P/E': round(pe,2) if pe else 'N/A',
-            'P/B': round(pb,2) if pb else 'N/A',
-            'Dividend Yield': round(div_yield*100,2) if div_yield else 'N/A'
-        })
+            rows.append({
+                'Stock': ticker,
+                'PEG': round(peg,2) if peg else 'N/A',
+                'ROE': round(roe_value,2) if roe_value else 'N/A',
+                'Debt/Equity': round(debt_to_equity/100,2) if debt_to_equity else 'N/A',
+                'P/E': round(pe,2) if pe else 'N/A',
+                'P/B': round(pb,2) if pb else 'N/A',
+                'Dividend Yield': round(div_yield*100,2) if div_yield else 'N/A'
+            })
+        except Exception as e:
+            print(f"Error fetching fundamentals for {ticker}: {e}")
     return pd.DataFrame(rows)
 
 def evaluate_health(fund_df):
@@ -201,16 +192,19 @@ def evaluate_health(fund_df):
     return pd.DataFrame(verdicts)
 
 def create_health_chart(health_df):
-    counts = health_df['Verdict'].value_counts()
-    labels = [f"{v} ({counts[v]})" for v in counts.index]
-    sizes = [counts[v] for v in counts.index]
-    colors = ["#28a745" if "Healthy" in v else "#ffc107" if "Attention" in v else "#dc3545" for v in counts.index]
+    try:
+        counts = health_df['Verdict'].value_counts()
+        labels = [f"{v} ({counts[v]})" for v in counts.index]
+        sizes = [counts[v] for v in counts.index]
+        colors = ["#28a745" if "Healthy" in v else "#ffc107" if "Attention" in v else "#dc3545" for v in counts.index]
 
-    plt.figure(figsize=(6,6))
-    plt.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%')
-    plt.title('Portfolio Health Summary')
-    plt.savefig('static/health_distribution.png')
-    plt.close()
+        plt.figure(figsize=(6,6))
+        plt.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%')
+        plt.title('Portfolio Health Summary')
+        plt.savefig('static/health_distribution.png')
+        plt.close()
+    except Exception as e:
+        print(f"Error creating health chart: {e}")
 
 # Routes
 @app.route('/')
