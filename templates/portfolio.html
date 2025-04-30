@@ -1,1 +1,41 @@
-<html><body><h1>Portfolio View</h1></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Portfolio</title>
+</head>
+<body>
+    <h1>Portfolio Overview</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Ticker</th>
+                <th>Quantity</th>
+                <th>Buy Price (₹)</th>
+                <th>Current Price (₹)</th>
+                <th>Value (₹)</th>
+                <th>Gain/Loss (₹)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>
+                <td>{{ row.ticker }}</td>
+                <td>{{ row.quantity }}</td>
+                <td>{{ row.buy_price | round(2) }}</td>
+                <td>{{ row.current_price | round(2) }}</td>
+                <td>{{ row.value | round(2) }}</td>
+                <td>{{ row.gain_loss | round(2) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <p><strong>Total Invested:</strong> ₹{{ total_cost | round(2) }}</p>
+    <p><strong>Net Gain/Loss:</strong> ₹{{ net_gain | round(2) }}</p>
+
+    <a href="{{ url_for('charts_view') }}">View Charts</a> |
+    <a href="{{ url_for('fundamentals_view') }}">View Fundamentals</a> |
+    <a href="{{ url_for('health_view') }}">View Health</a>
+</body>
+</html>
