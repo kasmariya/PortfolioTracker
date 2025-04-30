@@ -1,1 +1,19 @@
-<html><body><h1>Charts View</h1></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Portfolio Charts</title>
+</head>
+<body>
+    <h1>Portfolio Charts</h1>
+
+    <h2>Stock-wise Distribution</h2>
+    <img src="{{ url_for('static', filename='stock_distribution.png') }}" alt="Stock Distribution">
+
+    <h2>Sector-wise Distribution</h2>
+    <img src="{{ url_for('static', filename='sector_distribution.png') }}" alt="Sector Distribution">
+
+    <br>
+    <a href="{{ url_for('portfolio_view') }}">Back to Portfolio</a>
+</body>
+</html>
