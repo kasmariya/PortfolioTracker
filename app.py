@@ -24,7 +24,6 @@ portfolio = {
 CACHE_FILE = 'financials_cache.pkl'
 financials_cache = {}
 
-# Load/Save Cache
 def load_cache():
     global financials_cache
     if os.path.exists(CACHE_FILE):
@@ -35,7 +34,6 @@ def save_cache():
     with open(CACHE_FILE, 'wb') as f:
         pickle.dump(financials_cache, f)
 
-# Manual ROE Calculation
 def calculate_manual_roe(ticker):
     try:
         if ticker not in financials_cache:
@@ -72,12 +70,10 @@ def calculate_manual_roe(ticker):
         print(f"Error calculating manual ROE for {ticker}: {e}")
         return None
 
-# Core Functions
-def get_portfolio_data():
-    ticker_values = {}
-    sector_values = defaultdict(float)
-    rows = []
-    total_cost = 0.0
-    total_value = 0.0
+# Remaining code stays the same ...
 
-    for ticker, (qty, buy_price) in portfolio.items():
+load_cache()
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
