@@ -1,46 +1,47 @@
-import os
-import pickle
+# FINAL UPDATED app.py
+
+from flask import Flask, render_template, url_for
 import yfinance as yf
 import pandas as pd
-from flask import Flask, render_template
 import matplotlib.pyplot as plt
-import io
+from collections import defaultdict
+import pickle
+import os
 
 app = Flask(__name__)
 
-# Global cache dictionary
-financials_cache = {}
-
-# File where cache will be saved
-CACHE_FILE = 'financials_cache.pkl'
-
-# Load cache if exists
-def load_cache():
-    global financials_cache
-    if os.path.exists(CACHE_FILE):
-        with open(CACHE_FILE, 'rb') as f:
-            financials_cache = pickle.load(f)
-        print("✅ Loaded financials cache from file.")
-
-# Save cache to file
-def save_cache():
-    with open(CACHE_FILE, 'wb') as f:
-        pickle.dump(financials_cache, f)
-    print("💾 Saved financials cache to file.")
-
-# Portfolio data
 portfolio = {
     'TATAMOTORS.NS': (600, 740.42),
     'JIOFIN.NS': (1550, 228.49),
     'TCS.NS': (79, 3472.58),
     'TATAPOWER.NS': (550, 318.05),
-    'BEL.NS': (580, 249.54),         
+    'BEL.NS': (580, 249.54),
     'IRCTC.NS': (225, 715.00),
     'TITAN.NS': (50, 3016.05),
     'MOTHERSON.NS': (1000, 124.14),
-    'HINDUNILVR.NS': (50, 2178.46),  
-    'BAJAJHFL.NS': (690, 114.77)     
+    'HINDUNILVR.NS': (50, 2178.46),
+    'BAJAJHFL.NS': (690, 114.77)
 }
+
+CACHE_FILE = 'financials_cache.pkl'
+financials_cache = {}
+
+# Load/Save Cache
+def load_cache():
+    global financials_cache
+    if os.path.exists(CACHE_FILE):
+        with open(CACHE_FILE, 'rb') as f:
+            financials_cache = pickle.load(f)
+
+def save_cache():
+    with open(CACHE_FILE, 'wb') as f:
+        pickle.dump(financials_cache, f)
+
+@app.before_first_request
+def initialize():
+    load_cache()
+
+# Manual ROE Calculation
 
 def calculate_manual_roe(ticker):
     try:
@@ -50,7 +51,7 @@ def calculate_manual_roe(ticker):
                 'income_stmt': stock.financials,
                 'balance_sheet': stock.balance_sheet
             }
-            save_cache()  # Save after adding new stock
+            save_cache()
 
         income_stmt = financials_cache[ticker]['income_stmt']
         balance_sheet = financials_cache[ticker]['balance_sheet']
@@ -58,182 +59,174 @@ def calculate_manual_roe(ticker):
         net_income = None
         shareholder_equity = None
 
-        # Try multiple possible field names for Net Income
-        for possible_net_income in ['Net Income', 'NetIncome', 'Net Income Common Stockholders']:
-            if possible_net_income in income_stmt.index:
-                net_income = income_stmt.loc[possible_net_income].iloc[0]
+        for ni in ['Net Income', 'NetIncome', 'Net Income Common Stockholders']:
+            if ni in income_stmt.index:
+                net_income = income_stmt.loc[ni].iloc[0]
                 break
-        
-        # Try multiple possible field names for Equity
-        for possible_equity in ['Total Stockholder Equity', 'Common Stock Equity', 'Total Equity Gross Minority Interest']:
-            if possible_equity in balance_sheet.index:
-                shareholder_equity = balance_sheet.loc[possible_equity].iloc[0]
+
+        for eq in ['Total Stockholder Equity', 'Common Stock Equity', 'Total Equity Gross Minority Interest']:
+            if eq in balance_sheet.index:
+                shareholder_equity = balance_sheet.loc[eq].iloc[0]
                 break
 
         if net_income is None or shareholder_equity is None or shareholder_equity == 0:
             return None
-        
+
         roe = (net_income / shareholder_equity) * 100
         return round(roe, 2)
 
     except Exception as e:
-        print(f"⚠️ Error calculating manual ROE for {ticker}: {e}")
+        print(f"Error calculating manual ROE for {ticker}: {e}")
         return None
 
-def fetch_fundamentals(portfolio):
+# Core Functions
+
+def get_portfolio_data():
+    ticker_values = {}
+    sector_values = defaultdict(float)
+    rows = []
+    total_cost = 0.0
+    total_value = 0.0
+
+    for ticker, (qty, buy_price) in portfolio.items():
+        stock = yf.Ticker(ticker)
+        hist = stock.history(period="2d")
+        info = stock.info
+
+        if not hist.empty and len(hist) >= 1:
+            current_price = hist['Close'].iloc[-1]
+            market_value = current_price * qty
+            cost_value = buy_price * qty
+            gain_loss = market_value - cost_value
+
+            total_cost += cost_value
+            total_value += market_value
+
+            sector = info.get("sector", "Unknown")
+            ticker_values[ticker] = market_value
+            sector_values[sector] += market_value
+
+            rows.append({
+                'ticker': ticker,
+                'quantity': qty,
+                'buy_price': buy_price,
+                'current_price': current_price,
+                'value': market_value,
+                'gain_loss': gain_loss
+            })
+
+    net_gain = total_value - total_cost
+    return rows, ticker_values, sector_values, total_cost, net_gain
+
+def create_distribution_charts(ticker_values, sector_values):
+    labels = list(ticker_values.keys())
+    sizes = list(ticker_values.values())
+    plt.figure(figsize=(6,6))
+    plt.pie(sizes, labels=labels, autopct='%1.1f%%')
+    plt.title('Stock-wise Portfolio')
+    plt.savefig('static/stock_distribution.png')
+    plt.close()
+
+    labels = list(sector_values.keys())
+    sizes = list(sector_values.values())
+    plt.figure(figsize=(6,6))
+    plt.pie(sizes, labels=labels, autopct='%1.1f%%')
+    plt.title('Sector-wise Portfolio')
+    plt.savefig('static/sector_distribution.png')
+    plt.close()
+
+def fetch_fundamentals():
     rows = []
     for ticker in portfolio.keys():
-        try:
-            stock = yf.Ticker(ticker)
-            info = stock.info
+        stock = yf.Ticker(ticker)
+        info = stock.info
 
-            # Get necessary values
-            roe_value = info.get('returnOnEquity', None)
-            div_value = info.get('dividendYield', None)
-            pe_value = info.get('trailingPE', None)
-            growth_rate = info.get("earningsQuarterlyGrowth")  # Quarterly EPS growth
-            peg_value = info.get('pegRatio', None)
+        roe_value = info.get('returnOnEquity')
+        if roe_value is None:
+            roe_value = calculate_manual_roe(ticker)
+        else:
+            roe_value = roe_value * 100
 
-            # If PEG not available, try to calculate
-            if peg_value is None and pe_value is not None and growth_rate is not None and growth_rate != 0:
-                peg_value = pe_value / (growth_rate * 100)  # growth_rate is like 0.15 → 15%
+        div_yield = info.get('dividendYield')
+        pe = info.get('trailingPE')
+        pb = info.get('priceToBook')
+        debt_to_equity = info.get('debtToEquity')
+        growth_rate = info.get('earningsQuarterlyGrowth')
+        peg = info.get('pegRatio')
 
-            # 🌟 If ROE is missing, calculate manually
-            if roe_value is None:
-                roe_value = calculate_manual_roe(ticker)
-            else:
-                roe_value = roe_value * 100  # Convert from decimal to %
+        if peg is None and pe and growth_rate and growth_rate != 0:
+            peg = pe / (growth_rate * 100)
 
-            row = {
-                "Stock": ticker,
-                "PEG": round(peg_value, 2) if peg_value is not None else 'N/A',
-                "ROE": round(roe_value, 2) if roe_value is not None else 'N/A',
-                "Debt/Equity": round(info['debtToEquity'] / 100, 2) if info.get('debtToEquity') is not None else 'N/A',
-                "P/E": round(pe_value, 2) if pe_value is not None else 'N/A',
-                "P/B": round(info['priceToBook'], 2) if info.get('priceToBook') is not None else 'N/A',
-                "Dividend Yield": round(div_value * 100, 2) if div_value is not None else 'N/A'
-            }
-            rows.append(row)
-        except Exception as e:
-            print(f"⚠️ Error fetching data for {ticker}: {e}")
+        rows.append({
+            'Stock': ticker,
+            'PEG': round(peg,2) if peg else 'N/A',
+            'ROE': round(roe_value,2) if roe_value else 'N/A',
+            'Debt/Equity': round(debt_to_equity/100,2) if debt_to_equity else 'N/A',
+            'P/E': round(pe,2) if pe else 'N/A',
+            'P/B': round(pb,2) if pb else 'N/A',
+            'Dividend Yield': round(div_yield*100,2) if div_yield else 'N/A'
+        })
     return pd.DataFrame(rows)
 
-def is_number(x):
-    return isinstance(x, (int, float))
-
-def evaluate_portfolio_health(fundamentals_df):
+def evaluate_health(fund_df):
     verdicts = []
-    for idx, row in fundamentals_df.iterrows():
-        name = row['Stock']
-        roe = row.get('ROE')
-        debt_eq = row.get('Debt/Equity')
-        pe = row.get('P/E')
-        pb = row.get('P/B')
-        peg = row.get('PEG')
-        div = row.get('Dividend Yield')
-
+    for _, row in fund_df.iterrows():
         score = 0
         notes = []
 
-        if is_number(peg) and peg <= 1.5:
-            score += 1
-        else:
-            notes.append("High PEG")
+        if isinstance(row['PEG'], (int, float)) and row['PEG'] <= 1.5: score +=1
+        else: notes.append('High PEG')
+        if isinstance(row['ROE'], (int, float)) and row['ROE'] >= 15: score +=1
+        else: notes.append('Low ROE')
+        if isinstance(row['Debt/Equity'], (int, float)) and row['Debt/Equity'] <= 0.5: score +=1
+        else: notes.append('High Debt')
+        if isinstance(row['P/E'], (int, float)) and row['P/E'] <= 15: score +=1
+        else: notes.append('High P/E')
+        if isinstance(row['P/B'], (int, float)) and row['P/B'] <= 1.5: score +=1
+        else: notes.append('High P/B')
+        if isinstance(row['Dividend Yield'], (int, float)) and row['Dividend Yield'] >= 2: score +=1
 
-        if is_number(roe) and roe >= 15:
-            score += 1
-        else:
-            notes.append("Low ROE")
-
-        if is_number(debt_eq) and debt_eq <= 0.5:
-            score += 1
-        else:
-            notes.append("High Debt")
-
-        if is_number(pe) and pe <= 15:
-            score += 1
-        else:
-            notes.append("High P/E")
-
-        if is_number(pb) and pb <= 1.5:
-            score += 1
-        else:
-            notes.append("High P/B")
-
-        if is_number(div) and div >= 2:
-            score += 1
-
-        verdict = "✅ Healthy" if score >= 4 else "⚠️ Needs Attention" if score >= 2 else "❌ Weak Fundamentals"
-
-        verdicts.append({
-            "Stock": name,
-            "PEG": peg,
-            "ROE": roe,
-            "Debt/Equity": debt_eq,
-            "P/E": pe,
-            "P/B": pb,
-            "Dividend Yield": div,
-            "Score": score,
-            "Verdict": verdict,
-            "Notes": ", ".join(notes)
-        })
-
+        verdict = '✅ Healthy' if score>=4 else '⚠️ Needs Attention' if score>=2 else '❌ Weak'
+        verdicts.append({'Stock': row['Stock'], 'Score': score, 'Verdict': verdict, 'Notes': ", ".join(notes)})
     return pd.DataFrame(verdicts)
 
-def create_health_pie_chart(health_df):
-    # Color map
-    color_map = {
-        "✅ Healthy": '#28a745',        # Green
-        "⚠️ Needs Attention": '#ffc107', # Yellow
-        "❌ Weak Fundamentals": '#dc3545' # Red
-    }
+def create_health_chart(health_df):
+    counts = health_df['Verdict'].value_counts()
+    labels = [f"{v} ({counts[v]})" for v in counts.index]
+    sizes = [counts[v] for v in counts.index]
+    colors = ["#28a745" if "Healthy" in v else "#ffc107" if "Attention" in v else "#dc3545" for v in counts.index]
 
-    # Group stocks by Verdict
-    grouped = health_df.groupby('Verdict')['Stock'].apply(list)
-
-    labels = []
-    sizes = []
-    colors = []
-
-    for verdict, stocks in grouped.items():
-        stock_list = ", ".join(stocks)  # Join stock names
-        label = f"{verdict} ({len(stocks)})\n{stock_list}"  # Verdict + count + stocks
-        labels.append(label)
-        sizes.append(len(stocks))
-        colors.append(color_map.get(verdict, '#6c757d'))
-
-    # Plot
-    plt.figure(figsize=(10, 10))
-    wedges, texts, autotexts = plt.pie(
-        sizes,
-        labels=labels,
-        colors=colors,
-        autopct='%1.1f%%',
-        startangle=140,
-        textprops={'fontsize': 10},
-        wedgeprops={'edgecolor': 'black'}
-    )
-    plt.title('🧠 Portfolio Health Summary', fontsize=18)
-    plt.axis('equal')
-    img = io.BytesIO()
-    plt.savefig(img, format='png')
-    img.seek(0)
+    plt.figure(figsize=(6,6))
+    plt.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%')
+    plt.title('Portfolio Health Summary')
+    plt.savefig('static/health_distribution.png')
     plt.close()
-    return img
 
+# Routes
 @app.route('/')
+@app.route('/portfolio')
 def portfolio_view():
-    fundamentals_df = fetch_fundamentals(portfolio)
-    health_df = evaluate_portfolio_health(fundamentals_df)
-    return render_template('portfolio.html', portfolio=portfolio, health_df=health_df)
+    rows, ticker_vals, sector_vals, total_cost, net_gain = get_portfolio_data()
+    return render_template('portfolio.html', rows=rows, total_cost=total_cost, net_gain=net_gain)
+
+@app.route('/charts')
+def charts_view():
+    rows, ticker_vals, sector_vals, _, _ = get_portfolio_data()
+    create_distribution_charts(ticker_vals, sector_vals)
+    return render_template('charts.html')
+
+@app.route('/fundamentals')
+def fundamentals_view():
+    fund_df = fetch_fundamentals()
+    return render_template('fundamentals.html', fundamentals=fund_df.to_dict('records'))
 
 @app.route('/health')
-def health_score_view():
-    fundamentals_df = fetch_fundamentals(portfolio)
-    health_df = evaluate_portfolio_health(fundamentals_df)
-    img = create_health_pie_chart(health_df)
-    return render_template('health.html', health_df=health_df, img=img)
+def health_view():
+    fund_df = fetch_fundamentals()
+    health_df = evaluate_health(fund_df)
+    create_health_chart(health_df)
+    return render_template('health.html', health=health_df.to_dict('records'))
 
 if __name__ == '__main__':
-    load_cache()  # Load cache if available
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
