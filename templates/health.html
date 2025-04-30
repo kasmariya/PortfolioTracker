@@ -1,1 +1,38 @@
-<html><body><h1>Health Score View</h1></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Health Score</title>
+</head>
+<body>
+    <h1>Portfolio Health Score</h1>
+
+    <h2>Health Summary Chart</h2>
+    <img src="{{ url_for('static', filename='health_distribution.png') }}" alt="Health Chart">
+
+    <h2>Health Breakdown</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Stock</th>
+                <th>Score</th>
+                <th>Verdict</th>
+                <th>Notes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in health %}
+            <tr>
+                <td>{{ row.Stock }}</td>
+                <td>{{ row.Score }}</td>
+                <td>{{ row.Verdict }}</td>
+                <td>{{ row.Notes }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <br>
+    <a href="{{ url_for('portfolio_view') }}">Back to Portfolio</a>
+</body>
+</html>
