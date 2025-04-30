@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 import pickle
 import os
+import time
 
 app = Flask(__name__)
 
@@ -34,6 +35,25 @@ def load_cache():
 def save_cache():
     with open(CACHE_FILE, 'wb') as f:
         pickle.dump(financials_cache, f)
+
+# Retry helpers
+def safe_get_info(ticker, retries=3, delay=1):
+    for _ in range(retries):
+        try:
+            return yf.Ticker(ticker).info
+        except Exception as e:
+            print(f"[INFO ERROR] Retrying {ticker}: {e}")
+            time.sleep(delay)
+    return {}
+
+def safe_get_history(ticker, retries=3, delay=1):
+    for _ in range(retries):
+        try:
+            return yf.Ticker(ticker).history(period="2d")
+        except Exception as e:
+            print(f"[HISTORY ERROR] Retrying {ticker}: {e}")
+            time.sleep(delay)
+    return pd.DataFrame()
 
 # Manual ROE Calculation
 def calculate_manual_roe(ticker):
@@ -81,9 +101,8 @@ def get_portfolio_data():
     total_value = 0.0
 
     for ticker, (qty, buy_price) in portfolio.items():
-        stock = yf.Ticker(ticker)
-        hist = stock.history(period="2d")
-        info = stock.info
+        hist = safe_get_history(ticker)
+        info = safe_get_info(ticker)
 
         if not hist.empty and len(hist) >= 1:
             current_price = hist['Close'].iloc[-1]
@@ -130,8 +149,7 @@ def create_distribution_charts(ticker_values, sector_values):
 def fetch_fundamentals():
     rows = []
     for ticker in portfolio.keys():
-        stock = yf.Ticker(ticker)
-        info = stock.info
+        info = safe_get_info(ticker)
 
         roe_value = info.get('returnOnEquity')
         if roe_value is None:
