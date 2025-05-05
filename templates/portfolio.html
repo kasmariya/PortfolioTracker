@@ -1,12 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Portfolio</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-info h1 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .user-info a {
+            display: inline-block;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #007BFF;
+        }
+
+        .user-info a:hover {
+            text-decoration: underline;
+        }
+
+        .portfolio-overview {
+            flex-grow: 1;
+            text-align: left;
+        }
+
+        h1 {
+            color: #333;
+            margin: 0;
+        }
+
+        .summary {
+            display: flex;
+            justify-content: space-between;
+            width: 50%;
+            text-align: left;
+            font-size: 16px;
+        }
+
+        .gain {
+            color: green;
+            font-weight: bold;
+        }
+
+        .loss {
+            color: red;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            table-layout: fixed;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            text-align: right;
+            border: 1px solid #ccc;
+            word-wrap: break-word;
+        }
+
+        th {
+            background-color: #f0f0f0;
+        }
+
+        td:first-child,
+        th:first-child {
+            text-align: left;
+        }
+
+        tr.gain-row {
+            background-color: #e6f4ea;
+        }
+
+        tr.loss-row {
+            background-color: #fbeaea;
+        }
+
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        a {
+            margin-right: 10px;
+            text-decoration: none;
+            color: #007BFF;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
+
 <body>
-    <h1>Portfolio Overview</h1>
-    <table border="1">
+    <div class="header-container">
+        <div class="portfolio-overview">
+            <h1>Portfolio Overview</h1>
+        </div>
+        <div class="user-info">
+            <h1>Welcome, {{ current_user.username }}!</h1>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </div>
+
+    <div class="summary">
+        <p><strong>Total Invested:</strong> {{ total_cost }}</p>
+        <p><strong>Total Current Value:</strong> {{ total_value }}</p>
+        <p><strong>Net Gain/Loss:</strong>
+            <span class="{{ 'gain' if net_gain|replace(',', '')|float >= 0 else 'loss' }}">
+                {{ net_gain }}
+            </span>
+        </p>
+    </div>
+
+    <table>
         <thead>
             <tr>
                 <th>Ticker</th>
@@ -19,23 +147,25 @@
         </thead>
         <tbody>
             {% for row in rows %}
-            <tr>
+            {% set row_value = row.quantity * row.current_price %}
+            {% set row_gain_loss = row_value - (row.quantity * row.buy_price) %}
+            <tr class="{{ 'gain-row' if row_gain_loss >= 0 else 'loss-row' }}">
                 <td>{{ row.ticker }}</td>
                 <td>{{ row.quantity }}</td>
                 <td>{{ row.buy_price | round(2) }}</td>
                 <td>{{ row.current_price | round(2) }}</td>
-                <td>{{ row.value | round(2) }}</td>
-                <td>{{ row.gain_loss | round(2) }}</td>
+                <td>{{ row_value | round(2) }}</td>
+                <td class="{{ 'gain' if row_gain_loss >= 0 else 'loss' }}">
+                    {{ row_gain_loss | round(2) }}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 
-    <p><strong>Total Invested:</strong> ₹{{ total_cost | round(2) }}</p>
-    <p><strong>Net Gain/Loss:</strong> ₹{{ net_gain | round(2) }}</p>
-
     <a href="{{ url_for('charts_view') }}">View Charts</a> |
     <a href="{{ url_for('fundamentals_view') }}">View Fundamentals</a> |
     <a href="{{ url_for('health_view') }}">View Health</a>
 </body>
+
 </html>
