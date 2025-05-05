@@ -1,12 +1,71 @@
-from flask import Flask, render_template, url_for
+from flask import Flask, render_template, url_for, redirect, request, flash
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 import yfinance as yf
 import pandas as pd
 import matplotlib.pyplot as plt
 from collections import defaultdict
 import pickle
 import os
+from babel.numbers import format_currency
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend
 
+
+def format_inr(value):
+    return format_currency(value, 'INR', locale='en_IN').replace(u'\xa0', u' ')  # To ensure spacing is correct
+
+# Initialize Flask app and LoginManager
 app = Flask(__name__)
+app.secret_key = os.urandom(24)
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+# User class (for demo purposes, you can replace this with a database)
+class User:
+    def __init__(self, id, username, password_hash):
+        self.id = id
+        self.username = username
+        self.password_hash = password_hash
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+    @staticmethod
+    def get(id):
+        if id == 1:
+            return User(id=1, username="prashant251089@gmail.com", password_hash=generate_password_hash("041080@Abha"))
+        return None
+
+    @staticmethod
+    def get_by_username(username):
+        if username == "prashant251089@gmail.com":
+            return User(id=1, username="prashant251089@gmail.com", password_hash=generate_password_hash("041080@Abha"))
+        return None
+
+    # ✅ Required by Flask-Login
+    @property
+    def is_authenticated(self):
+        return True
+
+    @property
+    def is_active(self):
+        return True
+
+    @property
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        return str(self.id)
+
+
+# Loading user into Flask-Login
+@login_manager.user_loader
+def load_user(user_id):
+    return User.get(int(user_id))
 
 portfolio = {
     'TATAMOTORS.NS': (600, 740.42),
@@ -87,7 +146,8 @@ def get_portfolio_data():
             info = stock.info
 
             if not hist.empty and len(hist) >= 1:
-                current_price = hist['Close'].iloc[-1]
+                #current_price = hist['Close'].iloc[-1]
+                current_price = stock.fast_info["last_price"]
                 market_value = current_price * qty
                 cost_value = buy_price * qty
                 gain_loss = market_value - cost_value
@@ -163,7 +223,7 @@ def fetch_fundamentals():
                 'Debt/Equity': round(debt_to_equity/100,2) if debt_to_equity else 'N/A',
                 'P/E': round(pe,2) if pe else 'N/A',
                 'P/B': round(pb,2) if pb else 'N/A',
-                'Dividend Yield': round(div_yield*100,2) if div_yield else 'N/A'
+                'Dividend Yield': round(div_yield,2) if div_yield else 'N/A'
             })
         except Exception as e:
             print(f"Error fetching fundamentals for {ticker}: {e}")
@@ -207,24 +267,55 @@ def create_health_chart(health_df):
         print(f"Error creating health chart: {e}")
 
 # Routes
+
+# Sign-in and sign-out functionality
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        user = User.get_by_username(username)
+        if user and user.check_password(password):
+            login_user(user)
+            return redirect(url_for('portfolio_view'))
+        flash('Invalid username or password')
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+
+# Portfolio view - only accessible if logged in
 @app.route('/')
 @app.route('/portfolio')
+@login_required
 def portfolio_view():
     rows, ticker_vals, sector_vals, total_cost, net_gain = get_portfolio_data()
-    return render_template('portfolio.html', rows=rows, total_cost=total_cost, net_gain=net_gain)
+    total_value=total_cost+net_gain
+    formatted_total_cost = format_inr(total_cost)
+    formatted_total_value = format_inr(total_value)
+    formatted_net_gain = format_inr(net_gain)
 
+    return render_template('portfolio.html',rows=rows,total_cost=formatted_total_cost,total_value=formatted_total_value,
+                           net_gain=formatted_net_gain)
+
+# Routes for charts, fundamentals, and health - all require login
 @app.route('/charts')
+@login_required
 def charts_view():
     rows, ticker_vals, sector_vals, _, _ = get_portfolio_data()
     create_distribution_charts(ticker_vals, sector_vals)
     return render_template('charts.html')
 
 @app.route('/fundamentals')
+@login_required
 def fundamentals_view():
     fund_df = fetch_fundamentals()
     return render_template('fundamentals.html', fundamentals=fund_df.to_dict('records'))
 
 @app.route('/health')
+@login_required
 def health_view():
     fund_df = fetch_fundamentals()
     health_df = evaluate_health(fund_df)
@@ -236,5 +327,5 @@ load_cache()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
-
+    #app.run(host='0.0.0.0', port=port)
+    app.run(debug=True,port=port)
