@@ -4,3 +4,5 @@ yfinance
 matplotlib
 pandas
 numpy
+Babel
+flask-login
