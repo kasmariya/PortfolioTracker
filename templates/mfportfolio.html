@@ -151,11 +151,11 @@
                 <td>{{ fund.scheme }}</td>
                 <td>{{ fund.nav_date }}</td>
                 <td>{{ fund.balanced_units }}</td>
-                <td>{{ "%.2f"|format(fund.invested) }}</td>
-                <td>{{ "%.2f"|format(fund.nav) }}</td>
-                <td>{{ "%.2f"|format(fund.market_value) }}</td>
+                <td>{{ fund.invested | round(2) }}</td>
+                <td>{{ fund.nav | round(2) }}</td>
+                <td>{{ fund.market_value | round(2) }}</td>
                 <td class="{{ 'gain' if fund.gain_loss >= 0 else 'loss' }}">
-                    {{ "%+.2f"|format(fund.gain_loss) }}
+                    {{ fund.gain_loss | round(2) }}
                 </td>
             </tr>
             {% endfor %}
