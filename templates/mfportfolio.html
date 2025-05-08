@@ -150,7 +150,7 @@
                 <td>{{ fund.folio }}</td>
                 <td>{{ fund.scheme }}</td>
                 <td>{{ fund.nav_date }}</td>
-                <td>{{ fund.balanced_units }}</td>
+                <td>{{ fund.balanced_units | round(2)  }}</td>
                 <td>{{ fund.invested | round(2) }}</td>
                 <td>{{ fund.nav | round(2) }}</td>
                 <td>{{ fund.market_value | round(2) }}</td>
