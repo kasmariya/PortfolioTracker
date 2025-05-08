@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 import pickle
 import os
+import requests
 from babel.numbers import format_currency
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
@@ -67,7 +68,8 @@ class User:
 def load_user(user_id):
     return User.get(int(user_id))
 
-portfolio = {
+#Stocks
+portfolio = {  
     'TATAMOTORS.NS': (600, 740.42),
     'JIOFIN.NS': (1550, 228.49),
     'TCS.NS': (79, 3472.58),
@@ -79,6 +81,22 @@ portfolio = {
     'HINDUNILVR.NS': (50, 2178.46),
     'BAJAJHFL.NS': (690, 114.77)
 }
+
+#Mutual Funds
+NAV_URL = "https://www.amfiindia.com/spages/NAVAll.txt"
+
+mfportfolio = [
+    {"folio": "5137979", "amfi_code": "119242", "scheme": "DSP ELSS Tax Saver Fund - Direct Plan - Growth", "invested": 285000.00, "balanced_units": 2666.080},
+    {"folio": "16714214", "amfi_code": "119700", "scheme": "SBI Infrastructure Fund - Direct Plan - Growth", "invested": 202000.00, "balanced_units": 4072.150},
+    {"folio": "1018550203", "amfi_code": "119514", "scheme": "Aditya Birla Sun Life Infrastructure Fund - PLAN - Growth - Direct Plan", "invested": 136222.31, "balanced_units": 1458.720},
+    {"folio": "306653", "amfi_code": "131580", "scheme": "360 ONE Focused Equity Fund Direct Plan Growth", "invested": 97660.56, "balanced_units": 1942.370},
+    {"folio": "3083144", "amfi_code": "151113", "scheme": "HSBC Value Fund - Direct Growth", "invested": 78000.00, "balanced_units": 679.130},
+    {"folio": "7997047725", "amfi_code": "143783", "scheme": "Mirae Asset Healthcare Fund - Direct Plan", "invested": 71996.40, "balanced_units": 1803.005},
+    {"folio": "599364433105", "amfi_code": "120731", "scheme": "UTI Transportation & Logistics Fund - Direct Plan", "invested": 72000.00, "balanced_units": 248.059},
+    {"folio": "15387214", "amfi_code": "119769", "scheme": "Kotak India EQ Contra Fund - Direct Plan - Growth", "invested": 68000.00, "balanced_units": 397.700},
+]
+
+
 
 CACHE_FILE = 'financials_cache.pkl'
 financials_cache = {}
@@ -266,7 +284,44 @@ def create_health_chart(health_df):
     except Exception as e:
         print(f"Error creating health chart: {e}")
 
-# Routes
+#Mutual funds
+def update_mf_portfolio():
+    response = requests.get(NAV_URL)
+    nav_data = response.text.splitlines()
+    nav_map = {}
+
+    for line in nav_data:
+        parts = line.split(';')
+        if len(parts) >= 6:
+            amfi_code = parts[0]
+            nav = parts[4]
+            nav_date = parts[5]
+            if nav.replace('.', '', 1).isdigit():
+                nav_map[amfi_code] = {"nav": float(nav), "date": nav_date}
+
+    total_invested = 0
+    total_market_value = 0
+
+    for fund in mfportfolio:
+        code = fund['amfi_code']
+        if code in nav_map:
+            fund['nav'] = nav_map[code]['nav']
+            fund['nav_date'] = nav_map[code]['date']
+            fund['market_value'] = round(fund['balanced_units'] * fund['nav'], 2)
+            fund['gain_loss'] = round(fund['market_value'] - fund['invested'], 2)
+
+            total_invested += fund['invested']
+            total_market_value += fund['market_value']
+        else:
+            fund['nav'] = 0.0
+            fund['nav_date'] = "N.A."
+            fund['market_value'] = 0.0
+            fund['gain_loss'] = 0.0
+
+    total_gain_loss = round(total_market_value - total_invested, 2)
+    return total_invested, total_market_value, total_gain_loss
+
+# Routes - Stocks
 
 # Sign-in and sign-out functionality
 @app.route('/login', methods=['GET', 'POST'])
@@ -322,6 +377,33 @@ def health_view():
     create_health_chart(health_df)
     return render_template('health.html', health=health_df.to_dict('records'))
 
+# Routes - Mutual funds
+@app.route("/mfportfolio")
+@login_required
+def mf_portfolio_view():
+    total_invested, total_market_value, total_gain_loss = update_mf_portfolio()
+    return render_template("mfportfolio.html", portfolio=mfportfolio,
+                           total_invested=format_inr(total_invested),
+                           total_market_value=format_inr(total_market_value),
+                           total_gain_loss=format_inr(total_gain_loss))
+
+@app.route("/mfchart")
+@login_required
+def mf_chart_view():
+    labels = [fund["scheme"] for fund in mfportfolio if fund["market_value"] > 0]
+    values = [fund["market_value"] for fund in mfportfolio if fund["market_value"] > 0]
+
+    fig, ax = plt.subplots(figsize=(10, 10))
+    ax.pie(values, labels=labels, startangle=90, autopct='%1.1f%%')
+    plt.title("Portfolio Allocation", fontsize=16)
+    plt.tight_layout()
+
+    chart_path = "static/piechart.png"
+    plt.savefig(chart_path)
+    plt.close()
+
+    return render_template("mfchart.html", chart_path=chart_path)
+
 # ✅ Load cache once at startup
 load_cache()
 
@@ -329,3 +411,4 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     #app.run(host='0.0.0.0', port=port)
     app.run(debug=True,port=port)
+
