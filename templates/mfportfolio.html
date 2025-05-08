@@ -147,7 +147,6 @@
         <tbody>
             {% for fund in portfolio %}
             <tr class="{{ 'gain-row' if fund.gain_loss >= 0 else 'loss-row' }}">
-            <tr>
                 <td>{{ fund.folio }}</td>
                 <td>{{ fund.scheme }}</td>
                 <td>{{ fund.nav_date }}</td>
