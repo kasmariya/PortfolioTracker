@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mutual Fund Portfolio</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-info h1 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .user-info a {
+            display: inline-block;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #007BFF;
+        }
+
+        .user-info a:hover {
+            text-decoration: underline;
+        }
+
+        .portfolio-overview {
+            flex-grow: 1;
+            text-align: left;
+        }
+
+        h1 {
+            color: #333;
+            margin: 0;
+        }
+
+        .summary {
+            display: flex;
+            justify-content: space-between;
+            width: 50%;
+            text-align: left;
+            font-size: 16px;
+        }
+
+        .gain {
+            color: green;
+            font-weight: bold;
+        }
+
+        .loss {
+            color: red;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            table-layout: fixed;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            text-align: right;
+            border: 1px solid #ccc;
+            word-wrap: break-word;
+        }
+
+        th {
+            background-color: #f0f0f0;
+        }
+
+        td:first-child,
+        th:first-child {
+            text-align: left;
+        }
+
+        tr.gain-row {
+            background-color: #e6f4ea;
+        }
+
+        tr.loss-row {
+            background-color: #fbeaea;
+        }
+
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        a {
+            margin-right: 10px;
+            text-decoration: none;
+            color: #007BFF;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style> 
+</head>
+<body>
+    <div class="header-container">
+        <div class="portfolio-overview">
+            <h1>Mutual Fund Portfolio</h1>
+        </div>
+        <div class="user-info">
+            <h1>Logged in as: {{ current_user.username }}</h1>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </div>
+    <div class="summary">
+        <p><strong>Total Invested:</strong> ₹{{ "%.2f"|format(total_invested) }}</p>
+        <p><strong>Total Market Value:</strong> ₹{{ "%.2f"|format(total_market_value) }}</p>
+        <p><strong>Gain/Loss:</strong>
+        <span class="{{ 'gain' if total_gain_loss >= 0 else 'loss' }}">
+            ₹{{ "%+.2f"|format(total_gain_loss) }}
+        </span>    
+        </p>        
+    </div>
+    <table>
+        <tr>
+            <th>Folio</th><th>Scheme</th><th>NAV Date</th><th>Units</th>
+            <th>Invested (₹)</th><th>NAV</th><th>Market Value (₹)</th><th>Gain/Loss (₹)</th>
+        </tr>
+        {% for fund in portfolio %}
+        <tr>
+            <td>{{ fund.folio }}</td>
+            <td>{{ fund.scheme }}</td>
+            <td>{{ fund.nav_date }}</td>
+            <td>{{ fund.balanced_units }}</td>
+            <td>{{ "%.2f"|format(fund.invested) }}</td>
+            <td>{{ "%.2f"|format(fund.nav) }}</td>
+            <td>{{ "%.2f"|format(fund.market_value) }}</td>
+            <td class="{{ 'gain' if fund.gain_loss >= 0 else 'loss' }}">
+                {{ "%+.2f"|format(fund.gain_loss) }}
+            </td>            
+        </tr>
+        {% endfor %}
+    </table>
+    <a href="{{ url_for('portfolio_view') }}">← Back to Portfolio</a>
+</body>
+</html>
