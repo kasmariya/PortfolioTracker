@@ -121,11 +121,11 @@
         </div>
     </div>
     <div class="summary">
-        <p><strong>Total Invested:</strong> ₹{{ "%.2f"|format(total_invested) }}</p>
-        <p><strong>Total Market Value:</strong> ₹{{ "%.2f"|format(total_market_value) }}</p>
+        <p><strong>Total Invested:</strong> {{ total_invested }}</p>
+        <p><strong>Total Market Value:</strong> {{ total_market_value }}</p>
         <p><strong>Gain/Loss:</strong>
         <span class="{{ 'gain' if total_gain_loss >= 0 else 'loss' }}">
-            ₹{{ "%+.2f"|format(total_gain_loss) }}
+            {{ total_gain_loss }}
         </span>    
         </p>        
     </div>
