@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Mutual Fund Portfolio</title>
     <style>
@@ -108,8 +109,9 @@
         a:hover {
             text-decoration: underline;
         }
-    </style> 
+    </style>
 </head>
+
 <body>
     <div class="header-container">
         <div class="portfolio-overview">
@@ -124,31 +126,42 @@
         <p><strong>Total Invested:</strong> {{ total_invested }}</p>
         <p><strong>Total Market Value:</strong> {{ total_market_value }}</p>
         <p><strong>Gain/Loss:</strong>
-        <span class="{{ 'gain' if total_gain_loss|replace(',', '')|float >= 0 else 'loss' }}">
-            {{ total_gain_loss }}
-        </span>    
-        </p>        
+            <span class="{{ 'gain' if total_gain_loss|replace(',', '')|float >= 0 else 'loss' }}">
+                {{ total_gain_loss }}
+            </span>
+        </p>
     </div>
     <table>
-        <tr>
-            <th>Folio</th><th>Scheme</th><th>NAV Date</th><th>Units</th>
-            <th>Invested (₹)</th><th>NAV</th><th>Market Value (₹)</th><th>Gain/Loss (₹)</th>
-        </tr>
-        {% for fund in portfolio %}
-        <tr>
-            <td>{{ fund.folio }}</td>
-            <td>{{ fund.scheme }}</td>
-            <td>{{ fund.nav_date }}</td>
-            <td>{{ fund.balanced_units }}</td>
-            <td>{{ "%.2f"|format(fund.invested) }}</td>
-            <td>{{ "%.2f"|format(fund.nav) }}</td>
-            <td>{{ "%.2f"|format(fund.market_value) }}</td>
-            <td class="{{ 'gain' if fund.gain_loss >= 0 else 'loss' }}">
-                {{ "%+.2f"|format(fund.gain_loss) }}
-            </td>            
-        </tr>
-        {% endfor %}
+        <thead>
+            <tr>
+                <th>Folio</th>
+                <th>Scheme</th>
+                <th>NAV Date</th>
+                <th>Units</th>
+                <th>Invested (₹)</th>
+                <th>NAV</th>
+                <th>Market Value (₹)</th>
+                <th>Gain/Loss (₹)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for fund in portfolio %}
+            <tr>
+                <td>{{ fund.folio }}</td>
+                <td>{{ fund.scheme }}</td>
+                <td>{{ fund.nav_date }}</td>
+                <td>{{ fund.balanced_units }}</td>
+                <td>{{ "%.2f"|format(fund.invested) }}</td>
+                <td>{{ "%.2f"|format(fund.nav) }}</td>
+                <td>{{ "%.2f"|format(fund.market_value) }}</td>
+                <td class="{{ 'gain' if fund.gain_loss >= 0 else 'loss' }}">
+                    {{ "%+.2f"|format(fund.gain_loss) }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
     <a href="{{ url_for('portfolio_view') }}">← Back to Portfolio</a>
 </body>
+
 </html>
