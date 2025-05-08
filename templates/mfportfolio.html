@@ -124,7 +124,7 @@
         <p><strong>Total Invested:</strong> {{ total_invested }}</p>
         <p><strong>Total Market Value:</strong> {{ total_market_value }}</p>
         <p><strong>Gain/Loss:</strong>
-        <span class="{{ 'gain' if total_gain_loss >= 0 else 'loss' }}">
+        <span class="{{ 'gain' if total_gain_loss|replace(',', '')|float >= 0 else 'loss' }}">
             {{ total_gain_loss }}
         </span>    
         </p>        
