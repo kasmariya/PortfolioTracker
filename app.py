@@ -8,6 +8,7 @@ from collections import defaultdict
 import pickle
 import os
 import requests
+from bs4 import BeautifulSoup
 from babel.numbers import format_currency
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
@@ -211,6 +212,35 @@ def create_distribution_charts(ticker_values, sector_values):
     except Exception as e:
         print(f"Error creating charts: {e}")
 
+
+def get_eps_growth_next_year(ticker):
+    url = f"https://finance.yahoo.com/quote/{ticker}/analysis/"
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
+
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        soup = BeautifulSoup(response.text, "lxml")
+
+        # Look for all rows in all tables
+        tables = soup.find_all("table")
+        for table in tables:
+            rows = table.find_all("tr")
+            for row in rows:
+                cells = row.find_all("td")
+                if cells and ticker in cells[0].text:
+                    # EPS Growth section found
+                    for r in rows:
+                        c = r.find_all("td")
+                        if c and ticker in c[0].text:
+                            value = c[4].text.strip().replace("%", "")
+                            return float(value)
+        return None
+    except Exception as e:
+        print("Error fetching EPS growth:", e)
+        return None
+
 def fetch_fundamentals():
     rows = []
     for ticker in portfolio.keys():
@@ -228,11 +258,11 @@ def fetch_fundamentals():
             pe = info.get('trailingPE')
             pb = info.get('priceToBook')
             debt_to_equity = info.get('debtToEquity')
-            growth_rate = info.get('earningsQuarterlyGrowth')
+            growth_rate = get_eps_growth_next_year(ticker)
             peg = info.get('pegRatio')
 
             if peg is None and pe and growth_rate and growth_rate != 0:
-                peg = pe / (growth_rate * 100)
+                peg = pe / growth_rate
 
             rows.append({
                 'Stock': ticker,
