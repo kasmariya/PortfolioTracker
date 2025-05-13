@@ -8,6 +8,7 @@ from collections import defaultdict
 import pickle
 import os
 import requests
+from flask import request, session, jsonify
 from bs4 import BeautifulSoup
 from babel.numbers import format_currency
 import matplotlib
@@ -371,6 +372,19 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
+
+# For masking
+@app.route('/update_mask', methods=['POST'])
+def update_mask():
+    data = request.get_json()
+    # Extract 'mask' value from the JSON body
+    mask = data.get('mask', False)
+
+    # Store it in the session
+    session['mask'] = mask
+
+    # Respond with confirmation
+    return jsonify({'success': True, 'mask': mask})
 
 # ✅ Add Net Worth view - only accessible if logged in
 @app.route('/')
