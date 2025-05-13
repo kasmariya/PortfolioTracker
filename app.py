@@ -391,6 +391,9 @@ def update_mask():
 @app.route("/networth")
 @login_required
 def networth_view():
+    if 'mask' not in session:
+        session['mask'] = True  # default to masking ON
+
     _, _, _, total_cost, net_gain = get_portfolio_data()
     stock_value = total_cost + net_gain
 
@@ -403,7 +406,8 @@ def networth_view():
                            total_market_value=format_inr(mf_value),
                            my_net_worth=format_inr(my_net_worth),
                            stock_raw="{:.2f}".format(stock_value),
-                           mf_raw="{:.2f}".format(mf_value))
+                           mf_raw="{:.2f}".format(mf_value),
+                           mask=session['mask'])
 
 
 # Portfolio view 
