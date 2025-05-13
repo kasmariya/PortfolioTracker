@@ -1,1 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
 
+<head>
+    <meta charset="UTF-8">
+    <title>My Net Worth</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-info h1 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .user-info a {
+            display: inline-block;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #007BFF;
+        }
+
+        .user-info a:hover {
+            text-decoration: underline;
+        }
+
+        .mynetworth-overview {
+            flex-grow: 1;
+            text-align: left;
+        }
+
+        h1 {
+            color: #333;
+            margin: 0;
+        }
+
+        .parent-container {
+            display: flex;
+            justify-content: center;
+        }
+
+        .summary {
+            display: flex;
+            justify-content: space-between;
+            width: 50%;
+            text-align: left;
+            font-size: 16px;
+        }
+
+        .links {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .links a {
+            margin: 0 15px;
+            text-decoration: none;
+            color: #007BFF;
+            font-weight: bold;
+        }
+
+        .links a:hover {
+            text-decoration: underline;
+        }
+
+        #networthChart {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-container">
+        <div class="mynetworth-overview">
+            <h1>My Net Worth</h1>
+        </div>
+        <div class="user-info">
+            <h1>Welcome, {{ current_user.username }}!</h1>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </div>
+
+    <div class="summary">
+        <p><strong>Stock Value:</strong> {{ total_value }}</p>
+        <p><strong>Mutual Fund Value:</strong> {{ total_market_value }}</p>
+        <p><strong>Total Net Worth:</strong> {{ my_net_worth }}</p>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="networthChart"></canvas>
+    </div>
+
+    <script>
+        const stockValue = parseFloat("{{ stock_raw }}");
+        const mfValue = parseFloat("{{ mf_raw }}");
+        const ctx = document.getElementById('networthChart').getContext('2d');
+
+        const chart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['Stocks', 'Mutual Funds'],
+                datasets: [{
+                    data: [stockValue, mfValue],
+                    backgroundColor: ['#4e79a7', '#f28e2b']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    datalabels: {
+                        formatter: (value, ctx) => {
+                            let sum = 0;
+                            let dataArr = ctx.chart.data.datasets[0].data;
+                            dataArr.map(data => sum += data);
+                            let percentage = (value * 100 / sum).toFixed(1) + "%";
+                            return percentage;
+                        },
+                        color: '#fff',
+                        font: {
+                            weight: 'bold',
+                            size: 14
+                        }
+                    }
+                },
+                plugins: [ChartDataLabels],
+                onClick: (e) => {
+                    const activePoints = chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
+                    if (activePoints.length) {
+                        const firstPoint = activePoints[0];
+                        const index = firstPoint.index;
+                        if (index === 0) {
+                            // Link to the Stock Portfolio
+                            window.location.href = "{{ url_for('portfolio_view') }}";
+                        } else if (index === 1) {
+                            // Link to the Mutual Fund Portfolio
+                            window.location.href = "{{ url_for('mf_portfolio_view') }}";
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+    <div style="padding-bottom: 20px;"></div>
+    <div class="parent-container">
+        <a href="{{ url_for('portfolio_view') }}" style="color: green;">Stock Portfolio</a>&nbsp;|&nbsp;
+        <a href="{{ url_for('mf_portfolio_view') }}" style="color: green;">Mutual Fund Portfolio</a>
+    </div>
+</body>
+
+</html>
