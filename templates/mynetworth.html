@@ -78,6 +78,58 @@
             text-decoration: underline;
         }
 
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 20px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: #2196F3;
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(20px);
+        }
+
+        .privacy-label {
+            font-size: 14px;
+            color: #333;
+            font-weight: bold;
+        }
+
+
         #networthChart {
             max-width: 500px;
             margin: 0 auto;
@@ -87,22 +139,20 @@
 
 <body>
     <div class="header-container">
-        <div class="mynetworth-overview">
-            <h1>My Net Worth</h1>
+        <div class="mynetworth-overview" style="display: flex; align-items: center;">
+            <h1 style="margin: 0;">My Net Worth</h1>
+            <div class="privacy-toggle" style="display: flex; align-items: center; margin-left: 15px;">
+                <label class="switch" style="margin-right: 6px;">
+                    <input type="checkbox" id="privacyToggle" onchange="toggleMask()">
+                    <span class="slider round"></span>
+                </label>
+                <span class="privacy-label">Privacy Mode</span>
+            </div>
         </div>
         <div class="user-info">
             <h1>Welcome, {{ current_user.username }}!</h1>
             <a href="{{ url_for('logout') }}">Logout</a>
         </div>
-    </div>
-
-    <!-- Privacy Mode Toggle -->
-    <div class="privacy-toggle">
-        <label class="switch">
-            <input type="checkbox" id="privacyToggle" onchange="toggleMask()">
-            <span class="slider round"></span>
-        </label>
-        <span class="privacy-label">Privacy Mode</span>
     </div>
 
     <div class="summary">
@@ -118,7 +168,13 @@
 
     <script>
         // Masking
-        let masked = sessionStorage.getItem('mask') === 'true';
+
+        let masked = sessionStorage.getItem('mask');
+        if (masked === null) {
+            masked = "{{ 'true' if mask else 'false' }}";  // Wrap in quotes
+            sessionStorage.setItem('mask', masked);
+        }
+        masked = masked === 'true';
 
         function applyMask() {
             const elements = document.querySelectorAll('.maskable');
