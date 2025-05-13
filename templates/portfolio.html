@@ -116,10 +116,10 @@
 <body>
     <div class="header-container">
         <div class="portfolio-overview">
-            <h1>Portfolio Overview</h1>
+            <h1> Stock Portfolio</h1>
         </div>
         <div class="user-info">
-            <h1>Welcome, {{ current_user.username }}!</h1>
+            <h1>Logged in as: {{ current_user.username }}</h1>
             <a href="{{ url_for('logout') }}">Logout</a>
         </div>
     </div>
@@ -147,14 +147,14 @@
         </thead>
         <tbody>
             {% for row in rows %}
-            {% set row_value = row.quantity * row.current_price %}
-            {% set row_gain_loss = row_value - (row.quantity * row.buy_price) %}
+            {% set row_mktvalue = row.quantity * row.current_price %}
+            {% set row_gain_loss = row_mktvalue - (row.quantity * row.buy_price) %}
             <tr class="{{ 'gain-row' if row_gain_loss >= 0 else 'loss-row' }}">
                 <td>{{ row.ticker }}</td>
                 <td>{{ row.quantity }}</td>
                 <td>{{ row.buy_price | round(2) }}</td>
                 <td>{{ row.current_price | round(2) }}</td>
-                <td>{{ row_value | round(2) }}</td>
+                <td>{{ row_mktvalue | round(2) }}</td>
                 <td class="{{ 'gain' if row_gain_loss >= 0 else 'loss' }}">
                     {{ row_gain_loss | round(2) }}
                 </td>
@@ -166,8 +166,7 @@
     <a href="{{ url_for('charts_view') }}">View Distributions</a> |
     <a href="{{ url_for('fundamentals_view') }}">View Fundamentals</a> |
     <a href="{{ url_for('health_view') }}">View Health</a> |
-    <a href="{{ url_for('mf_portfolio_view') }}">MF Portfolio</a> |
-    <a href="{{ url_for('mf_chart_view') }}">MF Allocation</a>
+    <a href="{{ url_for('networth_view') }}">← Back to Home</a>
 </body>
 
 </html>
