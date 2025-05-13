@@ -362,7 +362,7 @@ def login():
         user = User.get_by_username(username)
         if user and user.check_password(password):
             login_user(user)
-            return redirect(url_for('portfolio_view'))
+            return redirect(url_for('networth_view'))
         flash('Invalid username or password')
     return render_template('login.html')
 
@@ -371,8 +371,28 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-# Portfolio view - only accessible if logged in
+
+# ✅ Add Net Worth view - only accessible if logged in
 @app.route('/')
+@app.route("/networth")
+@login_required
+def networth_view():
+    _, _, _, total_cost, net_gain = get_portfolio_data()
+    stock_value = total_cost + net_gain
+
+    _, mf_value, _ = update_mf_portfolio()
+
+    my_net_worth = stock_value + mf_value
+
+    return render_template("mynetworth.html",
+                           total_value=format_inr(stock_value),
+                           total_market_value=format_inr(mf_value),
+                           my_net_worth=format_inr(my_net_worth),
+                           stock_raw="{:.2f}".format(stock_value),
+                           mf_raw="{:.2f}".format(mf_value))
+
+
+# Portfolio view 
 @app.route('/portfolio')
 @login_required
 def portfolio_view():
@@ -431,8 +451,8 @@ def mf_chart_view():
     chart_path = "static/piechart.png"
     plt.savefig(chart_path)
     plt.close()
-
     return render_template("mfchart.html", chart_path=chart_path)
+
 
 # ✅ Load cache once at startup
 load_cache()
@@ -441,4 +461,3 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     #app.run(host='0.0.0.0', port=port)
     app.run(debug=True,port=port)
-
