@@ -150,7 +150,7 @@
                 <td>{{ fund.folio }}</td>
                 <td>{{ fund.scheme }}</td>
                 <td>{{ fund.nav_date }}</td>
-                <td>{{ fund.balanced_units | round(2)  }}</td>
+                <td>{{ fund.balanced_units | round(2) }}</td>
                 <td>{{ fund.invested | round(2) }}</td>
                 <td>{{ fund.nav | round(2) }}</td>
                 <td>{{ fund.market_value | round(2) }}</td>
@@ -161,7 +161,9 @@
             {% endfor %}
         </tbody>
     </table>
-    <a href="{{ url_for('portfolio_view') }}">← Back to Portfolio</a>
+    <a href="{{ url_for('mf_portfolio_view') }}">MF Portfolio</a> |
+    <a href="{{ url_for('mf_chart_view') }}">MF Allocation</a> |
+    <a href="{{ url_for('networth_view') }}">← Back to Home</a>
 </body>
 
 </html>
