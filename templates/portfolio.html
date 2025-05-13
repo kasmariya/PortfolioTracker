@@ -125,10 +125,10 @@
     </div>
 
     <div class="summary">
-        <p><strong>Total Invested:</strong> {{ total_cost }}</p>
-        <p><strong>Total Current Value:</strong> {{ total_value }}</p>
+        <p><strong>Total Invested:</strong> <span class="maskable">{{ total_cost }}</span></p>
+        <p><strong>Total Current Value:</strong> <span class="maskable">{{ total_value }}</span></p>
         <p><strong>Net Gain/Loss:</strong>
-            <span class="{{ 'gain' if net_gain|replace(',', '')|float >= 0 else 'loss' }}">
+            <span class="maskable {{ 'gain' if net_gain|replace(',', '')|float >= 0 else 'loss' }}">
                 {{ net_gain }}
             </span>
         </p>
@@ -141,7 +141,7 @@
                 <th>Quantity</th>
                 <th>Buy Price (₹)</th>
                 <th>Current Price (₹)</th>
-                <th>Value (₹)</th>
+                <th>Market Value (₹)</th>
                 <th>Gain/Loss (₹)</th>
             </tr>
         </thead>
@@ -151,18 +151,44 @@
             {% set row_gain_loss = row_mktvalue - (row.quantity * row.buy_price) %}
             <tr class="{{ 'gain-row' if row_gain_loss >= 0 else 'loss-row' }}">
                 <td>{{ row.ticker }}</td>
-                <td>{{ row.quantity }}</td>
-                <td>{{ row.buy_price | round(2) }}</td>
+                <td>
+                    <span class="maskable">{{ row.quantity }}</span>
+                </td>
+                <td>
+                    <span class="maskable">{{ row.buy_price | round(2) }}</span>
+                </td>
                 <td>{{ row.current_price | round(2) }}</td>
-                <td>{{ row_mktvalue | round(2) }}</td>
+                <td>
+                    <span class="maskable">{{ row_mktvalue | round(2) }}</span>
+                </td>
                 <td class="{{ 'gain' if row_gain_loss >= 0 else 'loss' }}">
-                    {{ row_gain_loss | round(2) }}
+                    <span class="maskable">{{ row_gain_loss | round(2) }}</span>
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 
+    <!-- Masking logic -->
+    <script>
+        let masked = sessionStorage.getItem('mask') === 'true';
+
+        function applyMask() {
+            document.querySelectorAll('.maskable').forEach(el => {
+                if (masked) {
+                    if (!el.dataset.original) {
+                        el.dataset.original = el.textContent;
+                    }
+                    el.textContent = '****';
+                } else {
+                    if (el.dataset.original) {
+                        el.textContent = el.dataset.original;
+                    }
+                }
+            });
+        }
+        window.addEventListener('DOMContentLoaded', applyMask);
+    </script>
     <a href="{{ url_for('charts_view') }}">View Distributions</a> |
     <a href="{{ url_for('fundamentals_view') }}">View Fundamentals</a> |
     <a href="{{ url_for('health_view') }}">View Health</a> |
