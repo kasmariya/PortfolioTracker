@@ -26,7 +26,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-# User class (for demo purposes, you can replace this with a database)
+# User class (validate login details with the stored data in credential.txt)
 class User:
     def __init__(self, id, username, password_hash):
         self.id = id
@@ -37,18 +37,31 @@ class User:
         return check_password_hash(self.password_hash, password)
 
     @staticmethod
+    def load_credentials():
+        creds = {}
+        with open("credential.txt", "r") as f:
+            for line in f:
+                if '=' in line:
+                    key, value = line.strip().split('=', 1)
+                    creds[key.strip()] = value.strip()
+        return creds
+
+    @staticmethod
     def get(id):
+        creds = User.load_credentials()
         if id == 1:
-            return User(id=1, username="prashant251089@gmail.com", password_hash=generate_password_hash("041080@Abha"))
+            return User(id=1, username=creds['username'],
+                        password_hash=generate_password_hash(creds['password']))
         return None
 
     @staticmethod
     def get_by_username(username):
-        if username == "prashant251089@gmail.com":
-            return User(id=1, username="prashant251089@gmail.com", password_hash=generate_password_hash("041080@Abha"))
+        creds = User.load_credentials()
+        if username == creds['username']:
+            return User(id=1, username=creds['username'],
+                        password_hash=generate_password_hash(creds['password']))
         return None
 
-    # ✅ Required by Flask-Login
     @property
     def is_authenticated(self):
         return True
