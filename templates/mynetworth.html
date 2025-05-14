@@ -9,7 +9,33 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        .watermark-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: url("{{ url_for('static', filename='assets/growth.jpg') }}");
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0.15;
+            /* Increased visibility */
+            z-index: -1;
+            pointer-events: none;
+            filter: brightness(0.9);
+        }
+
+        .content-container {
+            position: relative;
+            z-index: 1;
+            /* Ensures content is above the watermark */
+            padding: 20px;
         }
 
         .header-container {
@@ -129,7 +155,6 @@
             font-weight: bold;
         }
 
-
         #networthChart {
             max-width: 500px;
             margin: 0 auto;
@@ -138,135 +163,151 @@
 </head>
 
 <body>
-    <div class="header-container">
-        <div class="mynetworth-overview" style="display: flex; align-items: center;">
-            <h1 style="margin: 0;">My Net Worth</h1>
-            <div class="privacy-toggle" style="display: flex; align-items: center; margin-left: 15px;">
-                <label class="switch" style="margin-right: 6px;">
-                    <input type="checkbox" id="privacyToggle" onchange="toggleMask()">
-                    <span class="slider round"></span>
-                </label>
-                <span class="privacy-label">Privacy Mode</span>
+    <div class="watermark-container"></div> <!-- Watermark background image -->
+
+    <div class="content-container"> <!-- All the main content goes here -->
+        <div class="header-container">
+            <div class="mynetworth-overview" style="display: flex; align-items: center;">
+                <h1 style="margin: 0;">My Net Worth</h1>
+                <div class="privacy-toggle" style="display: flex; align-items: center; margin-left: 15px;">
+                    <label class="switch" style="margin-right: 6px;">
+                        <input type="checkbox" id="privacyToggle" onchange="toggleMask()">
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="privacy-label">Privacy Mode</span>
+                </div>
+            </div>
+            <div class="user-info">
+                <h1>Welcome, {{ current_user.username }}!</h1>
+                <a href="{{ url_for('logout') }}">Logout</a>
             </div>
         </div>
-        <div class="user-info">
-            <h1>Welcome, {{ current_user.username }}!</h1>
-            <a href="{{ url_for('logout') }}">Logout</a>
+
+        <div class="summary">
+            <p><strong>Stock Value:</strong> <span class="maskable"> {{ total_value }}</span></p>
+            <p><strong>Mutual Fund Value:</strong><span class="maskable"> {{ total_market_value }}</span></p>
+            <p><strong>Total Net Worth:</strong><span class="maskable"> {{ my_net_worth }}</span></p>
         </div>
-    </div>
 
-    <div class="summary">
-        <p><strong>Stock Value:</strong> <span class="maskable"> {{ total_value }}</span></p>
-        <p><strong>Mutual Fund Value:</strong><span class="maskable"> {{ total_market_value }}</span></p>
-        <p><strong>Total Net Worth:</strong><span class="maskable"> {{ my_net_worth }}</span></p>
-    </div>
+        <div class="chart-container">
+            <div style="padding-bottom: 60px;"></div>
+            <canvas id="networthChart"></canvas>
+        </div>
 
-    <div class="chart-container">
-        <div style="padding-bottom: 60px;"></div>
-        <canvas id="networthChart"></canvas>
-    </div>
+        <script>
+            // Masking logic
+            let masked = sessionStorage.getItem('mask');
+            if (masked === null) {
+                masked = "{{ 'true' if mask else 'false' }}";  // Wrap in quotes
+                sessionStorage.setItem('mask', masked);
+            }
+            masked = masked === 'true';
 
-    <script>
-        // Masking
-
-        let masked = sessionStorage.getItem('mask');
-        if (masked === null) {
-            masked = "{{ 'true' if mask else 'false' }}";  // Wrap in quotes
-            sessionStorage.setItem('mask', masked);
-        }
-        masked = masked === 'true';
-
-        function applyMask() {
-            const elements = document.querySelectorAll('.maskable');
-            elements.forEach(el => {
-                if (masked) {
-                    if (!el.dataset.original) {
-                        el.dataset.original = el.textContent;
+            function applyMask() {
+                const elements = document.querySelectorAll('.maskable');
+                elements.forEach(el => {
+                    if (masked) {
+                        if (!el.dataset.original) {
+                            el.dataset.original = el.textContent;
+                        }
+                        el.textContent = '****';
+                    } else {
+                        if (el.dataset.original) {
+                            el.textContent = el.dataset.original;
+                        }
                     }
-                    el.textContent = '****';
-                } else {
-                    if (el.dataset.original) {
-                        el.textContent = el.dataset.original;
-                    }
-                }
+                });
+
+                const toggle = document.getElementById('privacyToggle');
+                if (toggle) toggle.checked = masked;
+            }
+
+            function toggleMask() {
+                masked = !masked;
+                sessionStorage.setItem('mask', masked);
+
+                fetch('/update_mask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mask: masked })
+                });
+
+                applyMask();
+            }
+
+            window.addEventListener('DOMContentLoaded', applyMask);
+
+            // Chart code
+            const stockValue = parseFloat("{{ stock_raw }}");
+            const mfValue = parseFloat("{{ mf_raw }}");
+            const ctx = document.getElementById('networthChart').getContext('2d');
+
+            const formatter = new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                maximumFractionDigits: 2
             });
 
-            const toggle = document.getElementById('privacyToggle');
-            if (toggle) toggle.checked = masked;
-        }
-
-        function toggleMask() {
-            masked = !masked;
-            sessionStorage.setItem('mask', masked);
-
-            fetch('/update_mask', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mask: masked })
-            });
-
-            applyMask();
-        }
-
-        window.addEventListener('DOMContentLoaded', applyMask);
-
-        // Chart
-        const stockValue = parseFloat("{{ stock_raw }}");
-        const mfValue = parseFloat("{{ mf_raw }}");
-        const ctx = document.getElementById('networthChart').getContext('2d');
-
-        const chart = new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: ['Stocks', 'Mutual Funds'],
-                datasets: [{
-                    data: [stockValue, mfValue],
-                    backgroundColor: ['#4e79a7', '#f28e2b']
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    },
-                    datalabels: {
-                        formatter: (value, ctx) => {
-                            let sum = 0;
-                            let dataArr = ctx.chart.data.datasets[0].data;
-                            dataArr.map(data => sum += data);
-                            let percentage = (value * 100 / sum).toFixed(1) + "%";
-                            return percentage;
+            const chart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Stocks', 'Mutual Funds'],
+                    datasets: [{
+                        data: [stockValue, mfValue],
+                        backgroundColor: ['#4e79a7', '#f28e2b']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
                         },
-                        color: '#fff',
-                        font: {
-                            weight: 'bold',
-                            size: 14
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    return `${label}: ${formatter.format(value)}`;
+                                }
+                            }
+                        },
+                        datalabels: {
+                            formatter: (value, ctx) => {
+                                let sum = 0;
+                                let dataArr = ctx.chart.data.datasets[0].data;
+                                dataArr.map(data => sum += data);
+                                let percentage = (value * 100 / sum).toFixed(1) + "%";
+                                return percentage;
+                            },
+                            color: '#fff',
+                            font: {
+                                weight: 'bold',
+                                size: 14
+                            }
+                        }
+                    },
+                    onClick: (e) => {
+                        const activePoints = chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
+                        if (activePoints.length) {
+                            const index = activePoints[0].index;
+                            if (index === 0) {
+                                window.location.href = "{{ url_for('portfolio_view') }}";
+                            } else if (index === 1) {
+                                window.location.href = "{{ url_for('mf_portfolio_view') }}";
+                            }
                         }
                     }
                 },
-                plugins: [ChartDataLabels],
-                onClick: (e) => {
-                    const activePoints = chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
-                    if (activePoints.length) {
-                        const firstPoint = activePoints[0];
-                        const index = firstPoint.index;
-                        if (index === 0) {
-                            // Link to the Stock Portfolio
-                            window.location.href = "{{ url_for('portfolio_view') }}";
-                        } else if (index === 1) {
-                            // Link to the Mutual Fund Portfolio
-                            window.location.href = "{{ url_for('mf_portfolio_view') }}";
-                        }
-                    }
-                }
-            }
-        });
-    </script>
-    <div style="padding-bottom: 20px;"></div>
-    <div class="parent-container">
-        <a href="{{ url_for('portfolio_view') }}" style="color: green;">Stock Portfolio</a>&nbsp;|&nbsp;
-        <a href="{{ url_for('mf_portfolio_view') }}" style="color: green;">Mutual Fund Portfolio</a>
+                plugins: [ChartDataLabels]
+            });
+        </script>
+
+        <div style="padding-bottom: 20px;"></div>
+        <div class="parent-container">
+            <a href="{{ url_for('portfolio_view') }}" style="color: green;">Stock Portfolio</a>&nbsp;|&nbsp;
+            <a href="{{ url_for('mf_portfolio_view') }}" style="color: green;">Mutual Fund Portfolio</a>
+        </div>
     </div>
 </body>
 
