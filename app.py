@@ -308,6 +308,7 @@ def evaluate_health(fund_df):
         if isinstance(row['P/B'], (int, float)) and row['P/B'] <= 1.5: score +=1
         else: notes.append('High P/B')
         if isinstance(row['Dividend Yield'], (int, float)) and row['Dividend Yield'] >= 2: score +=1
+        else: notes.append('Low Dividend')
 
         verdict = '✅ Healthy' if score>=4 else '⚠️ Needs Attention' if score>=2 else '❌ Weak'
         verdicts.append({'Stock': row['Stock'], 'Score': score, 'Verdict': verdict, 'Notes': ", ".join(notes)})
