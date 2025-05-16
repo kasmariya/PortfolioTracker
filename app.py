@@ -483,9 +483,10 @@ def portfolio_view():
     formatted_total_cost = format_inr(total_cost)
     formatted_total_value = format_inr(total_value)
     formatted_net_gain = format_inr(net_gain)
+    net_gain_pct = (net_gain / total_cost * 100)
 
     return render_template('portfolio.html',rows=rows,total_cost=formatted_total_cost,total_value=formatted_total_value,
-                           net_gain=formatted_net_gain)
+                           net_gain=formatted_net_gain, net_gain_pct=net_gain_pct)
 
 # Routes for charts, fundamentals, and health - all require login
 @app.route('/charts')
@@ -514,10 +515,12 @@ def health_view():
 @login_required
 def mf_portfolio_view():
     total_invested, total_market_value, total_gain_loss = update_mf_portfolio()
+    net_gain_pct = (total_gain_loss / total_invested * 100)
     return render_template("mfportfolio.html", portfolio=mfportfolio,
                            total_invested=format_inr(total_invested),
                            total_market_value=format_inr(total_market_value),
-                           total_gain_loss=format_inr(total_gain_loss))
+                           total_gain_loss=format_inr(total_gain_loss),
+                           net_gain_pct=net_gain_pct)
 
 @app.route("/mfchart")
 @login_required
