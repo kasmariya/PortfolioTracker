@@ -10,18 +10,14 @@ import os
 import requests
 from flask import request, session, jsonify
 from bs4 import BeautifulSoup
-from babel.numbers import format_currency
+from babel.numbers import format_currency, format_decimal
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
 
 
-def format_inr(value):
-    return format_currency(value, 'INR', locale='en_IN').replace(u'\xa0', u' ')  # To ensure spacing is correct
-
 # Initialize Flask app and LoginManager
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
-
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -82,6 +78,18 @@ class User:
 @login_manager.user_loader
 def load_user(user_id):
     return User.get(int(user_id))
+
+# Currentcy Format - with ₹ symbol
+def format_inr(value):
+    return format_currency(value, 'INR', locale='en_IN').replace(u'\xa0', u' ')  # To ensure spacing is correct
+
+# For tables — no ₹ symbol
+def format_inr_no_symbol(value):
+        return format_decimal(value, locale='en_IN', format=u'#,##,##0.00')
+
+# Register the function as a Jinja2 filter
+app.jinja_env.filters['inr'] = format_inr      # Use in summaries
+app.jinja_env.filters['inr_plain'] = format_inr_no_symbol  # Use in tables
 
 #Stocks
 portfolio = {  
