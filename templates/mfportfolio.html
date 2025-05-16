@@ -127,7 +127,7 @@
         <p><strong>Total Market Value:</strong> <span class="maskable">{{ total_market_value }}</span></p>
         <p><strong>Gain/Loss:</strong>
             <span class="maskable {{ 'gain' if total_gain_loss|replace(',', '')|float >= 0 else 'loss' }}">
-                {{ total_gain_loss }}
+                {{ total_gain_loss }}&nbsp;({{ net_gain_pct | inr_plain }}%)
             </span>
         </p>
     </div>
@@ -163,7 +163,10 @@
                     <span class="maskable">{{ fund.market_value | inr_plain }}</span>
                 </td>
                 <td class="{{ 'gain' if fund.gain_loss >= 0 else 'loss' }}">
-                    <span class="maskable">{{ fund.gain_loss | inr_plain }}</span>
+                    <span class="maskable">{{ fund.gain_loss | inr_plain }}</span><br>
+                    <small class="{{ 'gain' if fund.gain_loss >= 0 else 'loss' }}">
+                        ({{ (fund.gain_loss / fund.invested * 100) | inr_plain }}%)
+                    </small>
                 </td>
             </tr>
             {% endfor %}
