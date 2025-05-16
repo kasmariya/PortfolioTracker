@@ -155,14 +155,14 @@
                     <span class="maskable">{{ row.quantity }}</span>
                 </td>
                 <td>
-                    <span class="maskable">{{ row.buy_price | round(2) }}</span>
+                    <span class="maskable">{{ row.buy_price | inr_plain }}</span>
                 </td>
-                <td>{{ row.current_price | round(2) }}</td>
+                <td>{{ row.current_price | inr_plain }}</td>
                 <td>
-                    <span class="maskable">{{ row_mktvalue | round(2) }}</span>
+                    <span class="maskable">{{ row_mktvalue | inr_plain }}</span>
                 </td>
                 <td class="{{ 'gain' if row_gain_loss >= 0 else 'loss' }}">
-                    <span class="maskable">{{ row_gain_loss | round(2) }}</span>
+                    <span class="maskable">{{ row_gain_loss | inr_plain }}</span>
                 </td>
             </tr>
             {% endfor %}
