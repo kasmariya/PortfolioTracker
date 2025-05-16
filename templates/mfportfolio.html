@@ -153,17 +153,17 @@
                 <td>{{ fund.scheme }}</td>
                 <td>{{ fund.nav_date }}</td>
                 <td>
-                    <span class="maskable">{{ fund.balanced_units | round(2) }}</span>
+                    <span class="maskable">{{ fund.balanced_units | inr_plain }}</span>
                 </td>
                 <td>
-                    <span class="maskable">{{ fund.invested | round(2) }}</span>
+                    <span class="maskable">{{ fund.invested | inr_plain }}</span>
                 </td>
-                <td>{{ fund.nav | round(2) }}</td>
+                <td>{{ fund.nav | inr_plain }}</td>
                 <td>
-                    <span class="maskable">{{ fund.market_value | round(2) }}</span>
+                    <span class="maskable">{{ fund.market_value | inr_plain }}</span>
                 </td>
                 <td class="{{ 'gain' if fund.gain_loss >= 0 else 'loss' }}">
-                    <span class="maskable">{{ fund.gain_loss | round(2) }}</span>
+                    <span class="maskable">{{ fund.gain_loss | inr_plain }}</span>
                 </td>
             </tr>
             {% endfor %}
