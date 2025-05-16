@@ -423,13 +423,48 @@ def networth_view():
 
     my_net_worth = stock_value + mf_value
 
+    #Index
+        indian_indices = {
+        "SENSEX": "^BSESN",
+        "NIFTY 50": "^NSEI",
+        "NIFTY MIDCAP 100": "^NIFMIDCAP100",
+        "NIFTY SMALLCAP 100": "^NIFSMCP100",
+        "NIFTY BANK": "^NSEBANK",
+        "NIFTY PHARMA": "^CNXPHARMA",
+        "NIFTY IT": "^CNXIT",
+        "NIFTY FMCG": "^CNXFMCG",
+        "INDIA VIX": "^INDIAVIX"
+    }
+    index_data = {}
+    for name, ticker in indian_indices.items():
+        try:
+            ticker_obj = yf.Ticker(ticker)
+            hist = ticker_obj.history(period="2d")
+
+            if len(hist) >= 2:
+                latest = hist['Close'].iloc[-1]
+                prev = hist['Close'].iloc[-2]
+                change = latest - prev
+                percent = (change / prev) * 100
+
+                index_data[name] = {
+                    'value': round(latest, 2),
+                    'change': round(percent, 2),
+                    'direction': 'up' if change > 0 else 'down' if change < 0 else 'flat'
+                }
+            else:
+                index_data[name] = {'value': 'N/A', 'change': 0, 'direction': 'flat'}
+
+        except Exception as e:
+            index_data[name] = {'value': 'N/A', 'change': 0, 'direction': 'flat'}
+
     return render_template("mynetworth.html",
                            total_value=format_inr(stock_value),
                            total_market_value=format_inr(mf_value),
                            my_net_worth=format_inr(my_net_worth),
                            stock_raw="{:.2f}".format(stock_value),
                            mf_raw="{:.2f}".format(mf_value),
-                           mask=session['mask'])
+                           mask=session['mask'],indices=index_data)
 
 
 # Portfolio view 
