@@ -35,7 +35,7 @@
             position: relative;
             z-index: 1;
             /* Ensures content is above the watermark */
-            padding: 20px;
+            padding: 50px;
         }
 
         .header-container {
@@ -159,6 +159,57 @@
             max-width: 500px;
             margin: 0 auto;
         }
+
+        /* Enhanced Ticker Styling */
+        .ticker-wrapper {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background: #e6f9e6;
+            color: #225522;
+            border-top: 1px solid #b6e7b6;
+            padding: 8px 0;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            z-index: 100;
+
+        }
+
+        .ticker {
+            display: inline-block;
+            padding-left: 100%;
+            animation: scroll-left 25s linear infinite;
+        }
+
+        .ticker-wrapper:hover .ticker {
+            animation-play-state: paused;
+        }
+
+        @keyframes scroll-left {
+            0% {
+                transform: translateX(0%);
+            }
+
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        .up {
+            color: #006400;
+            /* Dark green */
+        }
+
+        .down {
+            color: #b22222;
+            /* Firebrick red */
+        }
+
+        .neutral {
+            color: #555;
+            /* Medium gray */
+        }
     </style>
 </head>
 
@@ -186,7 +237,8 @@
         <div class="summary">
             <p><strong>Stock Value:</strong> <span class="maskable"> {{ total_value }}</span></p>
             <p><strong>Mutual Fund Value:</strong><span class="maskable"> {{ total_market_value }}</span></p>
-            <p><strong>Total Net Worth:</strong><span class="maskable" style="color: green;"> {{ my_net_worth }}</span></p>
+            <p><strong>Total Net Worth:</strong><span class="maskable" style="color: green;"> {{ my_net_worth }}</span>
+            </p>
         </div>
 
         <div class="chart-container">
@@ -309,6 +361,25 @@
             <a href="{{ url_for('mf_portfolio_view') }}" style="color: green;">Mutual Fund Portfolio</a>
         </div>
     </div>
+    <!-- Enhanced Index Ticker -->
+    <div class="ticker-wrapper">
+        <div class="ticker" id="indexTicker">
+            {% for name, data in indices.items() %}
+            <span style="margin-right: 25px;"
+                class="{% if data.direction == 'up' %}up{% elif data.direction == 'down' %}down{% else %}neutral{% endif %}">
+                {{ name }}: {{ data.value }}
+                {% if data.direction == 'up' %}
+                ▲
+                {% elif data.direction == 'down' %}
+                ▼
+                {% endif %}
+                ({{ data.change }}%)
+            </span>
+            {% endfor %}
+        </div>
+    </div>
+
+
 </body>
 
 </html>
