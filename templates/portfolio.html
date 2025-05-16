@@ -129,7 +129,7 @@
         <p><strong>Total Current Value:</strong> <span class="maskable">{{ total_value }}</span></p>
         <p><strong>Net Gain/Loss:</strong>
             <span class="maskable {{ 'gain' if net_gain|replace(',', '')|float >= 0 else 'loss' }}">
-                {{ net_gain }}
+                {{ net_gain }} ({{ net_gain_pct | inr_plain }}%)
             </span>
         </p>
     </div>
@@ -141,6 +141,7 @@
                 <th>Quantity</th>
                 <th>Buy Price (₹)</th>
                 <th>Current Price (₹)</th>
+                <th>Invested Value (₹)</th>
                 <th>Market Value (₹)</th>
                 <th>Gain/Loss (₹)</th>
             </tr>
@@ -148,21 +149,26 @@
         <tbody>
             {% for row in rows %}
             {% set row_mktvalue = row.quantity * row.current_price %}
-            {% set row_gain_loss = row_mktvalue - (row.quantity * row.buy_price) %}
+            {% set row_invvalue = row.quantity * row.buy_price %}
+            {% set row_gain_loss = row_mktvalue - row_invvalue %}
             <tr class="{{ 'gain-row' if row_gain_loss >= 0 else 'loss-row' }}">
                 <td>{{ row.ticker }}</td>
                 <td>
                     <span class="maskable">{{ row.quantity }}</span>
                 </td>
-                <td>
-                    <span class="maskable">{{ row.buy_price | inr_plain }}</span>
-                </td>
+                <td>{{ row.buy_price | inr_plain }}</td>
                 <td>{{ row.current_price | inr_plain }}</td>
+                <td>
+                    <span class="maskable">{{ row_invvalue | inr_plain }}</span>
+                </td>
                 <td>
                     <span class="maskable">{{ row_mktvalue | inr_plain }}</span>
                 </td>
                 <td class="{{ 'gain' if row_gain_loss >= 0 else 'loss' }}">
-                    <span class="maskable">{{ row_gain_loss | inr_plain }}</span>
+                    <span class="maskable">{{ row_gain_loss | inr_plain }}</span><br>
+                    <small class="{{ 'gain' if row_gain_loss >= 0 else 'loss' }}">
+                        ({{ (row_gain_loss / row_invvalue * 100) | inr_plain }}%)
+                    </small>
                 </td>
             </tr>
             {% endfor %}
