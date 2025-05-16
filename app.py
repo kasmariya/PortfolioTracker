@@ -423,23 +423,22 @@ def networth_view():
 
     my_net_worth = stock_value + mf_value
 
-    #Index
-        indian_indices = {
-        "SENSEX": "^BSESN",
-        "NIFTY 50": "^NSEI",
-        "NIFTY MIDCAP 100": "^NIFMIDCAP100",
-        "NIFTY SMALLCAP 100": "^NIFSMCP100",
-        "NIFTY BANK": "^NSEBANK",
-        "NIFTY PHARMA": "^CNXPHARMA",
-        "NIFTY IT": "^CNXIT",
-        "NIFTY FMCG": "^CNXFMCG",
-        "INDIA VIX": "^INDIAVIX"
-    }
+    indian_indices = {
+    "SENSEX": "^BSESN",
+    "NIFTY 50": "^NSEI",
+    "NIFTY MIDCAP 100": "NIFTY_MIDCAP_100.NS",  
+    "NIFTY SMALLCAP 100": "^CNXSC",             
+    "NIFTY BANK": "^NSEBANK",
+    "NIFTY PHARMA": "^CNXPHARMA",
+    "NIFTY IT": "^CNXIT",
+    "NIFTY FMCG": "^CNXFMCG",
+    "INDIA VIX": "^INDIAVIX"}
+
     index_data = {}
     for name, ticker in indian_indices.items():
         try:
             ticker_obj = yf.Ticker(ticker)
-            hist = ticker_obj.history(period="2d")
+            hist = ticker_obj.history(period="5d")
 
             if len(hist) >= 2:
                 latest = hist['Close'].iloc[-1]
@@ -452,11 +451,19 @@ def networth_view():
                     'change': round(percent, 2),
                     'direction': 'up' if change > 0 else 'down' if change < 0 else 'flat'
                 }
+            elif len(hist) == 1:
+                latest = hist['Close'].iloc[-1]
+                index_data[name] = {
+                    'value': round(latest, 2),
+                    'change': 0,
+                    'direction': 'flat'
+                }
             else:
                 index_data[name] = {'value': 'N/A', 'change': 0, 'direction': 'flat'}
 
         except Exception as e:
             index_data[name] = {'value': 'N/A', 'change': 0, 'direction': 'flat'}
+
 
     return render_template("mynetworth.html",
                            total_value=format_inr(stock_value),
