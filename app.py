@@ -350,7 +350,7 @@ def create_health_chart(health_df):
         )
 
     # Add legend using the original verdict names (without counts)
-    plt.legend(wedges, counts.index, title="Health Status", loc="center left", bbox_to_anchor=(1, 0.5))
+    plt.legend(wedges, counts.index, title="Health Status", loc="center right", bbox_to_anchor=(-0.1, 0.5))
     plt.title('Portfolio Health Summary')
     plt.tight_layout()
     plt.savefig('static/health_distribution.png')
