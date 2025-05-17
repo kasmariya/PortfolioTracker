@@ -304,18 +304,18 @@ def evaluate_health(fund_df):
     for _, row in fund_df.iterrows():
         score = 0
         notes = []
-
+        # Based on Nifty 50 and BSE Index
         if isinstance(row['PEG'], (int, float)) and row['PEG'] <= 1.5: score +=1
         else: notes.append('High PEG')
         if isinstance(row['ROE'], (int, float)) and row['ROE'] >= 15: score +=1
         else: notes.append('Low ROE')
-        if isinstance(row['Debt/Equity'], (int, float)) and row['Debt/Equity'] <= 0.5: score +=1
+        if isinstance(row['Debt/Equity'], (int, float)) and row['Debt/Equity'] <= 1: score +=1
         else: notes.append('High Debt')
-        if isinstance(row['P/E'], (int, float)) and row['P/E'] <= 15: score +=1
+        if isinstance(row['P/E'], (int, float)) and row['P/E'] <= 35: score +=1
         else: notes.append('High P/E')
-        if isinstance(row['P/B'], (int, float)) and row['P/B'] <= 1.5: score +=1
+        if isinstance(row['P/B'], (int, float)) and row['P/B'] <= 5: score +=1
         else: notes.append('High P/B')
-        if isinstance(row['Dividend Yield'], (int, float)) and row['Dividend Yield'] >= 2: score +=1
+        if isinstance(row['Dividend Yield'], (int, float)) and row['Dividend Yield'] >= 1: score +=1
         else: notes.append('Low Dividend')
 
         verdict = '✅ Healthy' if score>=4 else '⚠️ Needs Attention' if score>=2 else '❌ Weak'
@@ -323,19 +323,38 @@ def evaluate_health(fund_df):
     return pd.DataFrame(verdicts)
 
 def create_health_chart(health_df):
-    try:
-        counts = health_df['Verdict'].value_counts()
-        labels = [f"{v} ({counts[v]})" for v in counts.index]
-        sizes = [counts[v] for v in counts.index]
-        colors = ["#28a745" if "Healthy" in v else "#ffc107" if "Attention" in v else "#dc3545" for v in counts.index]
+    counts = health_df['Verdict'].value_counts()
+    labels = [f"{v} ({counts[v]})" for v in counts.index]
+    sizes = [counts[v] for v in counts.index]
 
-        plt.figure(figsize=(6,6))
-        plt.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%')
-        plt.title('Portfolio Health Summary')
-        plt.savefig('static/health_distribution.png')
-        plt.close()
-    except Exception as e:
-        print(f"Error creating health chart: {e}")
+    # Assign consistent colors based on verdict type
+    color_map = {
+                '✅ Healthy': '#28a745',         # Green
+                '⚠️ Needs Attention': '#ffc107',  # Yellow
+                '❌ Weak': '#dc3545'              # Red
+                }
+
+    # Ensure correct mapping even if other verdicts are introduced
+    colors = [color_map.get(v, "#6c757d") for v in counts.index]  # default: grey
+
+    plt.figure(figsize=(6, 6))
+    wedges, texts, autotexts = plt.pie(
+        sizes,
+        labels=labels,
+        colors=colors,
+        autopct='%1.1f%%',
+        startangle=140,
+        textprops=dict(color="black"),
+        shadow=True,         # Adds 3D-like shadow
+        explode=[0.03]*len(sizes)  # Slight explode for all slices
+        )
+
+    # Add legend using the original verdict names (without counts)
+    plt.legend(wedges, counts.index, title="Health Status", loc="center left", bbox_to_anchor=(1, 0.5))
+    plt.title('Portfolio Health Summary')
+    plt.tight_layout()
+    plt.savefig('static/health_distribution.png')
+    plt.close()
 
 #Mutual funds
 def update_mf_portfolio():
@@ -546,3 +565,4 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     #app.run(host='0.0.0.0', port=port)
     app.run(debug=True,port=port)
+
