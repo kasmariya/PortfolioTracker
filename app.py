@@ -221,7 +221,7 @@ def create_distribution_charts(ticker_values, sector_values):
         plt.figure(figsize=(6,6))
         plt.pie(sizes, labels=labels, autopct='%1.1f%%')
         plt.title('Stock-wise Portfolio')
-        plt.savefig('static/stock_distribution.png')
+        plt.savefig('static/stock_distribution.png', bbox_inches='tight')
         plt.close()
 
         labels = list(sector_values.keys())
@@ -229,7 +229,7 @@ def create_distribution_charts(ticker_values, sector_values):
         plt.figure(figsize=(6,6))
         plt.pie(sizes, labels=labels, autopct='%1.1f%%')
         plt.title('Sector-wise Portfolio')
-        plt.savefig('static/sector_distribution.png')
+        plt.savefig('static/sector_distribution.png', bbox_inches='tight')
         plt.close()
     except Exception as e:
         print(f"Error creating charts: {e}")
