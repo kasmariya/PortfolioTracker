@@ -364,7 +364,7 @@ def create_health_chart(health_df):
     )
     plt.title('Portfolio Health Summary', fontsize=16)
     plt.tight_layout()
-    plt.savefig('static/health_distribution.png')
+    plt.savefig('static/health_distribution.png', bbox_inches='tight')
     plt.close()
 
 
