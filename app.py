@@ -337,24 +337,37 @@ def create_health_chart(health_df):
     # Ensure correct mapping even if other verdicts are introduced
     colors = [color_map.get(v, "#6c757d") for v in counts.index]  # default: grey
 
-    plt.figure(figsize=(6, 6))
-    wedges, texts, autotexts = plt.pie(
+    fig, ax = plt.subplots(figsize=(8, 6))  # Larger figure
+
+    # [left, bottom, width, height]
+    ax.set_position([0.25, 0.1, 0.6, 0.8]) 
+
+    wedges, texts, autotexts = ax.pie(
         sizes,
         labels=labels,
         colors=colors,
         autopct='%1.1f%%',
         startangle=140,
         textprops=dict(color="black"),
-        shadow=True,         # Adds 3D-like shadow
-        explode=[0.03]*len(sizes)  # Slight explode for all slices
-        )
-
-    # Add legend using the original verdict names (without counts)
-    plt.legend(wedges, counts.index, title="Health Status", loc="center right", bbox_to_anchor=(-0.1, 0.5))
-    plt.title('Portfolio Health Summary')
+        shadow=True,
+        explode=[0.03] * len(sizes)
+    )
+    # Legend to the left of pie chart
+    ax.legend(
+        wedges,
+        counts.index,
+        title="Health Status",
+        loc="center right",
+        bbox_to_anchor=(-0.15, 0.5),  # Position it left of the pie
+        fontsize='large',
+        title_fontsize='x-large'
+    )
+    plt.title('Portfolio Health Summary', fontsize=16)
     plt.tight_layout()
     plt.savefig('static/health_distribution.png')
     plt.close()
+
+
 
 #Mutual funds
 def update_mf_portfolio():
