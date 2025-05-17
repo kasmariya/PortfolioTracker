@@ -119,6 +119,27 @@ mfportfolio = [
     {"folio": "15387214", "amfi_code": "119769", "scheme": "Kotak India EQ Contra Fund - Direct Plan - Growth", "invested": 68000.00, "balanced_units": 397.700},
 ]
 
+# Fundamental Threshold
+fundamentalThreshold = {
+    'PEG': 1.5,
+    'ROE': 15,
+    'Debt/Equity': 1,
+    'P/E': 35,
+    'P/B': 5,
+    'Dividend Yield': 1
+}
+
+# Displaying these indices on Home page
+indian_indices = {
+    "SENSEX": "^BSESN",
+    "NIFTY 50": "^NSEI",
+    "NIFTY MIDCAP 100": "NIFTY_MIDCAP_100.NS",  
+    "NIFTY SMALLCAP 100": "^CNXSC",             
+    "NIFTY BANK": "^NSEBANK",
+    "NIFTY PHARMA": "^CNXPHARMA",
+    "NIFTY IT": "^CNXIT",
+    "NIFTY FMCG": "^CNXFMCG",
+    "INDIA VIX": "^INDIAVIX"}
 
 
 CACHE_FILE = 'financials_cache.pkl'
@@ -305,17 +326,17 @@ def evaluate_health(fund_df):
         score = 0
         notes = []
         # Based on Nifty 50 and BSE Index
-        if isinstance(row['PEG'], (int, float)) and row['PEG'] <= 1.5: score +=1
+        if isinstance(row['PEG'], (int, float)) and row['PEG'] <= fundamentalThreshold['PEG']: score +=1
         else: notes.append('High PEG')
-        if isinstance(row['ROE'], (int, float)) and row['ROE'] >= 15: score +=1
+        if isinstance(row['ROE'], (int, float)) and row['ROE'] >= fundamentalThreshold['ROE']: score +=1
         else: notes.append('Low ROE')
-        if isinstance(row['Debt/Equity'], (int, float)) and row['Debt/Equity'] <= 1: score +=1
+        if isinstance(row['Debt/Equity'], (int, float)) and row['Debt/Equity'] <= fundamentalThreshold['Debt/Equity']: score +=1
         else: notes.append('High Debt')
-        if isinstance(row['P/E'], (int, float)) and row['P/E'] <= 35: score +=1
+        if isinstance(row['P/E'], (int, float)) and row['P/E'] <= fundamentalThreshold['P/E']: score +=1
         else: notes.append('High P/E')
-        if isinstance(row['P/B'], (int, float)) and row['P/B'] <= 5: score +=1
+        if isinstance(row['P/B'], (int, float)) and row['P/B'] <= fundamentalThreshold['P/B']: score +=1
         else: notes.append('High P/B')
-        if isinstance(row['Dividend Yield'], (int, float)) and row['Dividend Yield'] >= 1: score +=1
+        if isinstance(row['Dividend Yield'], (int, float)) and row['Dividend Yield'] >= fundamentalThreshold['Dividend Yield']: score +=1
         else: notes.append('Low Dividend')
 
         verdict = '✅ Healthy' if score>=4 else '⚠️ Needs Attention' if score>=2 else '❌ Weak'
@@ -455,17 +476,6 @@ def networth_view():
 
     my_net_worth = stock_value + mf_value
 
-    indian_indices = {
-    "SENSEX": "^BSESN",
-    "NIFTY 50": "^NSEI",
-    "NIFTY MIDCAP 100": "NIFTY_MIDCAP_100.NS",  
-    "NIFTY SMALLCAP 100": "^CNXSC",             
-    "NIFTY BANK": "^NSEBANK",
-    "NIFTY PHARMA": "^CNXPHARMA",
-    "NIFTY IT": "^CNXIT",
-    "NIFTY FMCG": "^CNXFMCG",
-    "INDIA VIX": "^INDIAVIX"}
-
     index_data = {}
     for name, ticker in indian_indices.items():
         try:
@@ -532,7 +542,7 @@ def charts_view():
 @login_required
 def fundamentals_view():
     fund_df = fetch_fundamentals()
-    return render_template('fundamentals.html', fundamentals=fund_df.to_dict('records'))
+    return render_template('fundamentals.html', fundamentals=fund_df.to_dict('records'), threshold=fundamentalThreshold)
 
 @app.route('/health')
 @login_required
