@@ -138,10 +138,10 @@
 
                 {% set peg_good = peg <= 1.5 %}
                 {% set roe_good = roe >= 15 %}
-                {% set de_good = de <= 0.5 %}
-                {% set pe_good = pe <= 15 %}
-                {% set pb_good = pb <= 1.5 %}
-                {% set dy_good = dy >= 2 %}
+                {% set de_good = de <= 1 %}
+                {% set pe_good = pe <= 35 %}
+                {% set pb_good = pb <= 5 %}
+                {% set dy_good = dy >= 1 %}
                 {% set score = [peg_good, roe_good, de_good, pe_good, pb_good, dy_good] | select('equalto', True) | list | length %}
 
                 {% if score == 6 %}
