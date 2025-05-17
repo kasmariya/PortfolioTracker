@@ -136,12 +136,12 @@
                 {% set pb = row['P/B'] | default('0') | float %}
                 {% set dy = row['Dividend Yield'] | default('0') | float %}
 
-                {% set peg_good = peg <= 1.5 %}
-                {% set roe_good = roe >= 15 %}
-                {% set de_good = de <= 1 %}
-                {% set pe_good = pe <= 35 %}
-                {% set pb_good = pb <= 5 %}
-                {% set dy_good = dy >= 1 %}
+                {% set peg_good = peg <= threshold['PEG'] %}
+                {% set roe_good = roe >= threshold['ROE'] %}
+                {% set de_good = de <= threshold['Debt/Equity'] %}
+                {% set pe_good = pe <= threshold['P/E'] %}
+                {% set pb_good = pb <= threshold['P/B'] %}
+                {% set dy_good = dy >= threshold['Dividend Yield'] %}
                 {% set score = [peg_good, roe_good, de_good, pe_good, pb_good, dy_good] | select('equalto', True) | list | length %}
 
                 {% if score == 6 %}
