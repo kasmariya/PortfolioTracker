@@ -119,7 +119,7 @@ mfportfolio = [
     {"folio": "15387214", "amfi_code": "119769", "scheme": "Kotak India EQ Contra Fund - Direct Plan - Growth", "invested": 68000.00, "balanced_units": 397.700},
 ]
 
-# Fundamental Threshold
+# Fundamental Thresholds for stocks (In comparison to Nifty 50 & Sensex index values)
 fundamentalThreshold = {
     'PEG': 1.5,
     'ROE': 15,
