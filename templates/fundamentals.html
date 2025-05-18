@@ -125,15 +125,13 @@
       <thead>
         <tr>
           <th>Stock</th>
-          <th title="PEG Ratio: Valuation vs Growth (≤1.5 is good)">PEG</th>
-          <th title="Return on Equity (≥15% is good)">ROE (%)</th>
-          <th title="Debt/Equity Ratio (≤0.5 is good)">Debt/Equity</th>
-          <th title="Price to Earnings Ratio (≤15 is value-oriented)">P/E</th>
-          <th title="Price to Book Ratio (≤1.5 is considered good)">P/B</th>
-          <th title="Annual Dividend Yield (≥2% is healthy)">
-            Dividend Yield (%)
-          </th>
-          <th title="Number of positive fundamentals">Score</th>
+          <th>PEG</th>
+          <th>ROE (%)</th>
+          <th>Debt/Equity</th>
+          <th>P/E</th>
+          <th>P/B</th>
+          <th>Dividend Yield (%)</th>
+          <th>Score</th>
         </tr>
       </thead>
       <tbody>
@@ -147,8 +145,8 @@
         {% set pe_good = pe <= threshold['P/E'] %} {% set pb_good = pb <=
         threshold['P/B'] %} {% set dy_good = dy >= threshold['Dividend Yield']
         %} {% set score = [peg_good, roe_good, de_good, pe_good, pb_good,
-        dy_good] | select('equalto', True) | list | length %} {% if score == 6
-        %} {% set row_class = 'excellent' %} {% elif score >= 4 %} {% set
+        dy_good] | select('equalto', True) | list | length %} {% if score >=4
+        %} {% set row_class = 'excellent' %} {% elif score >= 2 %} {% set
         row_class = 'average' %} {% else %} {% set row_class = 'poor' %} {%
         endif %}
         <tr class="{{ row_class }}">
