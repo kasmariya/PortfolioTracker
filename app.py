@@ -303,9 +303,16 @@ def fetch_fundamentals():
             debt_to_equity = info.get('debtToEquity')
             growth_rate = get_eps_growth_next_year(ticker)
             peg = info.get('pegRatio')
+            #
+            print("Ticker Info:", info)
+            print("PEG from API:", info.get('pegRatio'))
+            print("PE:", info.get('trailingPE'))
+            print("Growth Rate:", info.get('earningsQuarterlyGrowth'))
+            #
 
             if peg is None and pe and growth_rate and growth_rate != 0:
                 peg = pe / growth_rate
+                print("PEG from manual:", peg)
 
             rows.append({
                 'Stock': ticker,
