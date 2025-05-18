@@ -1,385 +1,414 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>My Net Worth</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+      }
+
+      .watermark-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-image: url("{{ url_for('static', filename='assets/growth.jpg') }}");
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
+        opacity: 0.15;
+        /* Increased visibility */
+        z-index: -1;
+        pointer-events: none;
+        filter: brightness(0.9);
+      }
+
+      .content-container {
+        position: relative;
+        z-index: 1;
+        /* Ensures content is above the watermark */
+        padding: 50px;
+      }
+
+      .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .user-info {
+        text-align: right;
+      }
+
+      .user-info h1 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .user-info a {
+        display: inline-block;
+        margin-top: 10px;
+        font-size: 14px;
+        color: #007bff;
+      }
+
+      .user-info a:hover {
+        text-decoration: underline;
+      }
+
+      .mynetworth-overview {
+        flex-grow: 1;
+        text-align: left;
+      }
+
+      h1 {
+        color: #333;
+        margin: 0;
+      }
+
+      .parent-container {
+        display: flex;
+        justify-content: center;
+      }
+
+      .summary {
+        display: flex;
+        justify-content: space-between;
+        width: 50%;
+        text-align: left;
+        font-size: 16px;
+      }
+
+      .links {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .links a {
+        margin: 0 15px;
+        text-decoration: none;
+        color: #007bff;
+        font-weight: bold;
+      }
+
+      .links a:hover {
+        text-decoration: underline;
+      }
+
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 40px;
+        height: 20px;
+      }
+
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.4s;
+        border-radius: 20px;
+      }
+
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 14px;
+        width: 14px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: 0.4s;
+        border-radius: 50%;
+      }
+
+      input:checked + .slider {
+        background-color: #2196f3;
+      }
+
+      input:checked + .slider:before {
+        transform: translateX(20px);
+      }
+
+      .privacy-label {
+        font-size: 14px;
+        color: #333;
+        font-weight: bold;
+      }
+
+      #networthChart {
+        max-width: 500px;
+        margin: 0 auto;
+      }
+
+      /* Enhanced Ticker Styling */
+      .ticker-wrapper {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        background: #e6f9e6;
+        color: #225522;
+        border-top: 1px solid #b6e7b6;
+        padding: 8px 0;
+        font-size: 14px;
+        white-space: nowrap;
+        overflow: hidden;
+        z-index: 100;
+      }
+
+      .ticker {
+        display: inline-block;
+        padding-left: 100%;
+        animation: scroll-left 25s linear infinite;
+      }
+
+      .ticker-wrapper:hover .ticker {
+        animation-play-state: paused;
+      }
+
+      @keyframes scroll-left {
+        0% {
+          transform: translateX(0%);
         }
 
-        .watermark-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-image: url("{{ url_for('static', filename='assets/growth.jpg') }}");
-            background-size: cover;
-            background-repeat: no-repeat;
-            background-position: center;
-            opacity: 0.15;
-            /* Increased visibility */
-            z-index: -1;
-            pointer-events: none;
-            filter: brightness(0.9);
+        100% {
+          transform: translateX(-100%);
         }
+      }
 
-        .content-container {
-            position: relative;
-            z-index: 1;
-            /* Ensures content is above the watermark */
-            padding: 50px;
-        }
+      .up {
+        color: #006400;
+        /* Dark green */
+      }
 
-        .header-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
+      .down {
+        color: #b22222;
+        /* Firebrick red */
+      }
 
-        .user-info {
-            text-align: right;
-        }
-
-        .user-info h1 {
-            margin: 0;
-            font-size: 18px;
-        }
-
-        .user-info a {
-            display: inline-block;
-            margin-top: 10px;
-            font-size: 14px;
-            color: #007BFF;
-        }
-
-        .user-info a:hover {
-            text-decoration: underline;
-        }
-
-        .mynetworth-overview {
-            flex-grow: 1;
-            text-align: left;
-        }
-
-        h1 {
-            color: #333;
-            margin: 0;
-        }
-
-        .parent-container {
-            display: flex;
-            justify-content: center;
-        }
-
-        .summary {
-            display: flex;
-            justify-content: space-between;
-            width: 50%;
-            text-align: left;
-            font-size: 16px;
-        }
-
-        .links {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .links a {
-            margin: 0 15px;
-            text-decoration: none;
-            color: #007BFF;
-            font-weight: bold;
-        }
-
-        .links a:hover {
-            text-decoration: underline;
-        }
-
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 40px;
-            height: 20px;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 20px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 14px;
-            width: 14px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked+.slider {
-            background-color: #2196F3;
-        }
-
-        input:checked+.slider:before {
-            transform: translateX(20px);
-        }
-
-        .privacy-label {
-            font-size: 14px;
-            color: #333;
-            font-weight: bold;
-        }
-
-        #networthChart {
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        /* Enhanced Ticker Styling */
-        .ticker-wrapper {
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            background: #e6f9e6;
-            color: #225522;
-            border-top: 1px solid #b6e7b6;
-            padding: 8px 0;
-            font-size: 14px;
-            white-space: nowrap;
-            overflow: hidden;
-            z-index: 100;
-
-        }
-
-        .ticker {
-            display: inline-block;
-            padding-left: 100%;
-            animation: scroll-left 25s linear infinite;
-        }
-
-        .ticker-wrapper:hover .ticker {
-            animation-play-state: paused;
-        }
-
-        @keyframes scroll-left {
-            0% {
-                transform: translateX(0%);
-            }
-
-            100% {
-                transform: translateX(-100%);
-            }
-        }
-
-        .up {
-            color: #006400;
-            /* Dark green */
-        }
-
-        .down {
-            color: #b22222;
-            /* Firebrick red */
-        }
-
-        .neutral {
-            color: #555;
-            /* Medium gray */
-        }
+      .neutral {
+        color: #555;
+        /* Medium gray */
+      }
     </style>
-</head>
+  </head>
 
-<body>
-    <div class="watermark-container"></div> <!-- Watermark background image -->
+  <body>
+    <div class="watermark-container"></div>
+    <!-- Watermark background image -->
 
-    <div class="content-container"> <!-- All the main content goes here -->
-        <div class="header-container">
-            <div class="mynetworth-overview" style="display: flex; align-items: center;">
-                <h1 style="margin: 0;">My Net Worth</h1>
-                <div class="privacy-toggle" style="display: flex; align-items: center; margin-left: 15px;">
-                    <label class="switch" style="margin-right: 6px;">
-                        <input type="checkbox" id="privacyToggle" onchange="toggleMask()">
-                        <span class="slider round"></span>
-                    </label>
-                    <span class="privacy-label">Privacy Mode</span>
-                </div>
-            </div>
-            <div class="user-info">
-                <h1>Welcome, {{ current_user.username }}!</h1>
-                <a href="{{ url_for('logout') }}">Logout</a>
-            </div>
+    <div class="content-container">
+      <!-- All the main content goes here -->
+      <div class="header-container">
+        <div
+          class="mynetworth-overview"
+          style="display: flex; align-items: center"
+        >
+          <h1 style="margin: 0">My Net Worth</h1>
+          <div
+            class="privacy-toggle"
+            style="display: flex; align-items: center; margin-left: 15px"
+          >
+            <label class="switch" style="margin-right: 6px">
+              <input
+                type="checkbox"
+                id="privacyToggle"
+                onchange="toggleMask()"
+              />
+              <span class="slider round"></span>
+            </label>
+            <span class="privacy-label">Privacy Mode</span>
+          </div>
         </div>
-
-        <div class="summary">
-            <p><strong>Stock Value:</strong> <span class="maskable"> {{ total_value }}</span></p>
-            <p><strong>Mutual Fund Value:</strong><span class="maskable"> {{ total_market_value }}</span></p>
-            <p><strong>Total Net Worth:</strong><span class="maskable" style="color: green;"> {{ my_net_worth }}</span>
-            </p>
+        <div class="user-info">
+          <h1>Welcome, {{ current_user.username }}!</h1>
+          <a href="{{ url_for('logout') }}">Logout</a>
         </div>
+      </div>
 
-        <div class="chart-container">
-            <div style="padding-bottom: 60px;"></div>
-            <canvas id="networthChart"></canvas>
-        </div>
+      <div class="summary">
+        <p>
+          <strong>Stock Value:</strong>
+          <span class="maskable"> {{ total_value }}</span>
+        </p>
+        <p>
+          <strong>Mutual Fund Value:</strong
+          ><span class="maskable"> {{ total_market_value }}</span>
+        </p>
+        <p>
+          <strong>Total Net Worth:</strong
+          ><span class="maskable" style="color: green">
+            {{ my_net_worth }}</span
+          >
+        </p>
+      </div>
 
-        <script>
-            // Masking logic
-            let masked = sessionStorage.getItem('mask');
-            if (masked === null) {
-                masked = "{{ 'true' if mask else 'false' }}";  // Wrap in quotes
-                sessionStorage.setItem('mask', masked);
+      <div class="chart-container">
+        <div style="padding-bottom: 60px"></div>
+        <canvas id="networthChart"></canvas>
+      </div>
+
+      <script>
+        // Masking logic
+        let masked = sessionStorage.getItem("mask");
+        if (masked === null) {
+          masked = "{{ 'true' if mask else 'false' }}"; // Wrap in quotes
+          sessionStorage.setItem("mask", masked);
+        }
+        masked = masked === "true";
+
+        function applyMask() {
+          const elements = document.querySelectorAll(".maskable");
+          elements.forEach((el) => {
+            if (masked) {
+              if (!el.dataset.original) {
+                el.dataset.original = el.textContent;
+              }
+              el.textContent = "****";
+            } else {
+              if (el.dataset.original) {
+                el.textContent = el.dataset.original;
+              }
             }
-            masked = masked === 'true';
+          });
 
-            function applyMask() {
-                const elements = document.querySelectorAll('.maskable');
-                elements.forEach(el => {
+          const toggle = document.getElementById("privacyToggle");
+          if (toggle) toggle.checked = masked;
+        }
+
+        function toggleMask() {
+          masked = !masked;
+          sessionStorage.setItem("mask", masked);
+
+          fetch("/update_mask", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ mask: masked }),
+          });
+
+          applyMask();
+        }
+
+        window.addEventListener("DOMContentLoaded", applyMask);
+
+        // Chart code
+        const stockValue = parseFloat("{{ stock_raw }}");
+        const mfValue = parseFloat("{{ mf_raw }}");
+        const ctx = document.getElementById("networthChart").getContext("2d");
+
+        const formatter = new Intl.NumberFormat("en-IN", {
+          style: "currency",
+          currency: "INR",
+          maximumFractionDigits: 2,
+        });
+
+        const chart = new Chart(ctx, {
+          type: "pie",
+          data: {
+            labels: ["Stocks", "Mutual Funds"],
+            datasets: [
+              {
+                data: [stockValue, mfValue],
+                backgroundColor: ["#4e79a7", "#f28e2b"],
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: "bottom",
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    const label = context.label || "";
+                    const value = context.raw || 0;
                     if (masked) {
-                        if (!el.dataset.original) {
-                            el.dataset.original = el.textContent;
-                        }
-                        el.textContent = '****';
+                      return `${label}: ****`;
                     } else {
-                        if (el.dataset.original) {
-                            el.textContent = el.dataset.original;
-                        }
+                      return `${label}: ${formatter.format(value)}`;
                     }
-                });
-
-                const toggle = document.getElementById('privacyToggle');
-                if (toggle) toggle.checked = masked;
-            }
-
-            function toggleMask() {
-                masked = !masked;
-                sessionStorage.setItem('mask', masked);
-
-                fetch('/update_mask', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ mask: masked })
-                });
-
-                applyMask();
-            }
-
-            window.addEventListener('DOMContentLoaded', applyMask);
-
-            // Chart code
-            const stockValue = parseFloat("{{ stock_raw }}");
-            const mfValue = parseFloat("{{ mf_raw }}");
-            const ctx = document.getElementById('networthChart').getContext('2d');
-
-            const formatter = new Intl.NumberFormat('en-IN', {
-                style: 'currency',
-                currency: 'INR',
-                maximumFractionDigits: 2
-            });
-
-            const chart = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: ['Stocks', 'Mutual Funds'],
-                    datasets: [{
-                        data: [stockValue, mfValue],
-                        backgroundColor: ['#4e79a7', '#f28e2b']
-                    }]
+                  },
                 },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    const label = context.label || '';
-                                    const value = context.raw || 0;
-                                    return `${label}: ${formatter.format(value)}`;
-                                }
-                            }
-                        },
-                        datalabels: {
-                            formatter: (value, ctx) => {
-                                let sum = 0;
-                                let dataArr = ctx.chart.data.datasets[0].data;
-                                dataArr.map(data => sum += data);
-                                let percentage = (value * 100 / sum).toFixed(1) + "%";
-                                return percentage;
-                            },
-                            color: '#fff',
-                            font: {
-                                weight: 'bold',
-                                size: 14
-                            }
-                        }
-                    },
-                    onClick: (e) => {
-                        const activePoints = chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
-                        if (activePoints.length) {
-                            const index = activePoints[0].index;
-                            if (index === 0) {
-                                window.location.href = "{{ url_for('portfolio_view') }}";
-                            } else if (index === 1) {
-                                window.location.href = "{{ url_for('mf_portfolio_view') }}";
-                            }
-                        }
-                    }
+              },
+              datalabels: {
+                formatter: (value, ctx) => {
+                  let sum = 0;
+                  let dataArr = ctx.chart.data.datasets[0].data;
+                  dataArr.map((data) => (sum += data));
+                  let percentage = ((value * 100) / sum).toFixed(1) + "%";
+                  return percentage;
                 },
-                plugins: [ChartDataLabels]
-            });
-        </script>
+                color: "#fff",
+                font: {
+                  weight: "bold",
+                  size: 14,
+                },
+              },
+            },
+            onClick: (e) => {
+              const activePoints = chart.getElementsAtEventForMode(
+                e,
+                "nearest",
+                { intersect: true },
+                true
+              );
+              if (activePoints.length) {
+                const index = activePoints[0].index;
+                if (index === 0) {
+                  window.location.href = "{{ url_for('portfolio_view') }}";
+                } else if (index === 1) {
+                  window.location.href = "{{ url_for('mf_portfolio_view') }}";
+                }
+              }
+            },
+          },
+          plugins: [ChartDataLabels],
+        });
+      </script>
 
-        <div style="padding-bottom: 20px;"></div>
-        <div class="parent-container">
-            <a href="{{ url_for('portfolio_view') }}" style="color: green;">Stock Portfolio</a>&nbsp;|&nbsp;
-            <a href="{{ url_for('mf_portfolio_view') }}" style="color: green;">Mutual Fund Portfolio</a>
-        </div>
+      <div style="padding-bottom: 20px"></div>
+      <div class="parent-container">
+        <a href="{{ url_for('portfolio_view') }}" style="color: green"
+          >Stock Portfolio</a
+        >&nbsp;|&nbsp;
+        <a href="{{ url_for('mf_portfolio_view') }}" style="color: green"
+          >Mutual Fund Portfolio</a
+        >
+      </div>
     </div>
     <!-- Enhanced Index Ticker -->
     <div class="ticker-wrapper">
-        <div class="ticker" id="indexTicker">
-            {% for name, data in indices.items() %}
-            <span style="margin-right: 25px;"
-                class="{% if data.direction == 'up' %}up{% elif data.direction == 'down' %}down{% else %}neutral{% endif %}">
-                {{ name }}: {{ data.value }}
-                {% if data.direction == 'up' %}
-                ▲
-                {% elif data.direction == 'down' %}
-                ▼
-                {% endif %}
-                ({{ data.change }}%)
-            </span>
-            {% endfor %}
-        </div>
+      <div class="ticker" id="indexTicker">
+        {% for name, data in indices.items() %}
+        <span
+          style="margin-right: 25px"
+          class="{% if data.direction == 'up' %}up{% elif data.direction == 'down' %}down{% else %}neutral{% endif %}"
+        >
+          {{ name }}: {{ data.value }} {% if data.direction == 'up' %} ▲ {% elif
+          data.direction == 'down' %} ▼ {% endif %} ({{ data.change }}%)
+        </span>
+        {% endfor %}
+      </div>
     </div>
-
-
-</body>
-
+  </body>
 </html>
