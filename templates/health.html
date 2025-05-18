@@ -1,117 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Portfolio Health Score</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
 
-        .header-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 20px;
-        }
+      .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 20px;
+      }
 
-        .user-info {
-            text-align: right;
-        }
+      .user-info {
+        text-align: right;
+      }
 
-        .user-info p {
-            margin: 0;
-            font-size: 14px;
-            color: #555;
-        }
+      .user-info p {
+        margin: 0;
+        font-size: 14px;
+        color: #555;
+      }
 
-        .user-info a {
-            font-size: 14px;
-            color: #007BFF;
-            text-decoration: none;
-            margin-top: 5px;
-            display: inline-block;
-        }
+      .user-info a {
+        font-size: 14px;
+        color: #007bff;
+        text-decoration: none;
+        margin-top: 5px;
+        display: inline-block;
+      }
 
-        .user-info a:hover {
-            text-decoration: underline;
-        }
+      .user-info a:hover {
+        text-decoration: underline;
+      }
 
-        h1 {
-            margin: 0;
-            font-size: 24px;
-            font-weight: bold;
-        }
+      /* Hover highlight entire row */
+      tr:hover td {
+        background-color: #f9f9f9;
+      }
 
-        h2 {
-            font-size: 18px;
-            margin-top: 10px;
-        }
+      .healthy {
+        background-color: #e6f4ea; /* light green */
+      }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            table-layout: fixed;
-        }
+      .attention {
+        background-color: #fff9e6; /* light yellow */
+      }
 
-        th, td {
-            padding: 10px;
-            border: 1px solid #ccc;
-            word-wrap: break-word;
-            text-align: center;
-        }
+      .weak {
+        background-color: #fbeaea; /* light red */
+      }
+      
+      h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: bold;
+      }
 
-        th {
-            background-color: #f0f0f0;
-        }
+      h2 {
+        font-size: 18px;
+        margin-top: 10px;
+      }
 
-        a {
-            color: #007BFF;
-            text-decoration: none;
-        }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        table-layout: fixed;
+      }
 
-        a:hover {
-            text-decoration: underline;
-        }
+      th,
+      td {
+        padding: 10px;
+        border: 1px solid #ccc;
+        word-wrap: break-word;
+        text-align: center;
+      }
+
+      th {
+        background-color: #f0f0f0;
+      }
+
+      a {
+        color: #007bff;
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="header-container">
-        <h1><strong>Portfolio Health Score</strong></h1>
-        <div class="user-info">
-            <p>Logged in as: {{ current_user.username }}</p>
-            <a href="{{ url_for('logout') }}">Logout</a>
-        </div>
+      <h1><strong>Portfolio Health Score</strong></h1>
+      <div class="user-info">
+        <p>Logged in as: {{ current_user.username }}</p>
+        <a href="{{ url_for('logout') }}">Logout</a>
+      </div>
     </div>
 
     <h2>Health Summary Chart</h2>
-    <img src="{{ url_for('static', filename='health_distribution.png') }}" alt="Health Chart" style="display: block; margin-left: auto; margin-right: auto;">
+    <img
+      src="{{ url_for('static', filename='health_distribution.png') }}"
+      alt="Health Chart"
+      style="display: block; margin-left: auto; margin-right: auto"
+    />
 
     <h2>Health Breakdown</h2>
     <table>
-        <thead>
-            <tr>
-                <th>Stock</th>
-                <th>Score</th>
-                <th>Verdict</th>
-                <th>Notes</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in health %}
-            <tr>
-                <td>{{ row.Stock }}</td>
-                <td>{{ row.Score }}</td>
-                <td>{{ row.Verdict }}</td>
-                <td>{{ row.Notes }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
+      <thead>
+        <tr>
+          <th>Stock</th>
+          <th>Score</th>
+          <th>Verdict</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in health %} {% set verdict_class = { '✅ Healthy':
+        'healthy', '⚠️ Needs Attention': 'attention', '❌ Weak': 'weak'
+        }[row.Verdict] %}
+        <tr class="{{ verdict_class }}">
+          <td>{{ row.Stock }}</td>
+          <td>{{ row.Score }}</td>
+          <td>{{ row.Verdict }}</td>
+          <td>{{ row.Notes }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
 
-    <br>
+    <br />
     <a href="{{ url_for('portfolio_view') }}">← Back to Portfolio</a>
-</body>
+  </body>
 </html>
