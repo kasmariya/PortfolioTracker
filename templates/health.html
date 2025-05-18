@@ -122,8 +122,8 @@
         </tr>
       </thead>
       <tbody>
-        {% for row in health %} {% set verdict_class = { '✅ Healthy':
-        'healthy', '⚠️ Needs Attention': 'attention', '❌ Weak': 'weak'
+        {% for row in health %} {% set verdict_class = { 'Healthy':
+        'healthy', 'Needs Attention': 'attention', 'Weak': 'weak'
         }[row.Verdict] %}
         <tr class="{{ verdict_class }}">
           <td>{{ row.Stock }}</td>
