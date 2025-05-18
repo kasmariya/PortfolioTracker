@@ -1,182 +1,187 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Fundamentals</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
 
-        .header-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
+      .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
 
-        .page-title {
-            font-size: 24px;
-            color: #333;
-        }
+      .page-title {
+        font-size: 24px;
+        color: #333;
+      }
 
-        .user-info {
-            text-align: right;
-            font-size: 14px;
-        }
+      .user-info {
+        text-align: right;
+        font-size: 14px;
+      }
 
-        .user-info a {
-            display: inline-block;
-            margin-left: 10px;
-            color: #007BFF;
-            text-decoration: none;
-        }
+      .user-info a {
+        display: inline-block;
+        margin-left: 10px;
+        color: #007bff;
+        text-decoration: none;
+      }
 
-        .user-info a:hover {
-            text-decoration: underline;
-        }
+      .user-info a:hover {
+        text-decoration: underline;
+      }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            table-layout: fixed;
-        }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        table-layout: fixed;
+      }
 
-        th, td {
-            padding: 10px;
-            border: 1px solid #ccc;
-            text-align: center;
-            word-wrap: break-word;
-        }
+      th,
+      td {
+        padding: 10px;
+        border: 1px solid #ccc;
+        text-align: center;
+        word-wrap: break-word;
+      }
 
-        th {
-            background-color: #f0f0f0;
-            font-weight: bold;
-        }
+      th {
+        background-color: #f0f0f0;
+        font-weight: bold;
+      }
 
-        td:first-child, th:first-child {
-            text-align: left;
-        }
+      td:first-child,
+      th:first-child {
+        text-align: left;
+      }
 
-        .positive {
-            background-color: #e6f4ea;
-            color: green;
-            font-weight: bold;
-        }
+      .positive {
+        background-color: #e6f4ea;
+        color: green;
+        font-weight: bold;
+      }
 
-        .negative {
-            background-color: #fbeaea;
-            color: red;
-            font-weight: bold;
-        }
+      .negative {
+        background-color: #fbeaea;
+        color: red;
+        font-weight: bold;
+      }
 
-        .icon {
-            margin-left: 5px;
-        }
+      .icon {
+        margin-left: 5px;
+      }
 
-        a {
-            display: inline-block;
-            margin-top: 20px;
-            color: #007BFF;
-            text-decoration: none;
-        }
+      a {
+        display: inline-block;
+        margin-top: 20px;
+        color: #007bff;
+        text-decoration: none;
+      }
 
-        a:hover {
-            text-decoration: underline;
-        }
+      a:hover {
+        text-decoration: underline;
+      }
 
-        .score-cell {
-            font-weight: bold;
-            background-color: #eef;
-        }
+      /* Hover highlight entire row */
+      tr:hover td {
+        background-color: #f9f9f9;
+      }
 
-        .excellent {
-            background-color: #d4edda;
-        }
+      .score-cell {
+        font-weight: bold;
+        background-color: #eef;
+      }
 
-        .average {
-            background-color: #fff3cd;
-        }
+      .excellent {
+        background-color: #d4edda;
+      }
 
-        .poor {
-            background-color: #f8d7da;
-        }
+      .average {
+        background-color: #fff3cd;
+      }
+
+      .poor {
+        background-color: #f8d7da;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="header-container">
-        <h1>Portfolio Fundamentals</h1>
-        <div class="user-info">
-            Logged in as: {{ current_user.username }}
-            <a href="{{ url_for('logout') }}">Logout</a>
-        </div>
+      <h1>Portfolio Fundamentals</h1>
+      <div class="user-info">
+        Logged in as: {{ current_user.username }}
+        <a href="{{ url_for('logout') }}">Logout</a>
+      </div>
     </div>
 
     <table>
-        <thead>
-            <tr>
-                <th>Stock</th>
-                <th title="PEG Ratio: Valuation vs Growth (≤1.5 is good)">PEG</th>
-                <th title="Return on Equity (≥15% is good)">ROE (%)</th>
-                <th title="Debt/Equity Ratio (≤0.5 is good)">Debt/Equity</th>
-                <th title="Price to Earnings Ratio (≤15 is value-oriented)">P/E</th>
-                <th title="Price to Book Ratio (≤1.5 is considered good)">P/B</th>
-                <th title="Annual Dividend Yield (≥2% is healthy)">Dividend Yield (%)</th>
-                <th title="Number of positive fundamentals">Score</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in fundamentals %}
-                {% set peg = row.PEG | default('0') | float %}
-                {% set roe = row.ROE | default('0') | float %}
-                {% set de = row['Debt/Equity'] | default('0') | float %}
-                {% set pe = row['P/E'] | default('0') | float %}
-                {% set pb = row['P/B'] | default('0') | float %}
-                {% set dy = row['Dividend Yield'] | default('0') | float %}
-
-                {% set peg_good = peg <= threshold['PEG'] %}
-                {% set roe_good = roe >= threshold['ROE'] %}
-                {% set de_good = de <= threshold['Debt/Equity'] %}
-                {% set pe_good = pe <= threshold['P/E'] %}
-                {% set pb_good = pb <= threshold['P/B'] %}
-                {% set dy_good = dy >= threshold['Dividend Yield'] %}
-                {% set score = [peg_good, roe_good, de_good, pe_good, pb_good, dy_good] | select('equalto', True) | list | length %}
-
-                {% if score == 6 %}
-                    {% set row_class = 'excellent' %}
-                {% elif score >= 4 %}
-                    {% set row_class = 'average' %}
-                {% else %}
-                    {% set row_class = 'poor' %}
-                {% endif %}
-            <tr class="{{ row_class }}">
-                <td>{{ row.Stock }}</td>
-                <td class="{{ 'positive' if peg_good else 'negative' }}">
-                    {{ peg }} <span class="icon">{{ '✔️' if peg_good else '❌' }}</span>
-                </td>
-                <td class="{{ 'positive' if roe_good else 'negative' }}">
-                    {{ roe if row.ROE is not none else 'N/A' }} <span class="icon">{{ '✔️' if roe_good else '❌' }}</span>
-                </td>
-                <td class="{{ 'positive' if de_good else 'negative' }}">
-                    {{ de if row['Debt/Equity'] is not none else 'N/A' }} <span class="icon">{{ '✔️' if de_good else '❌' }}</span>
-                </td>
-                <td class="{{ 'positive' if pe_good else 'negative' }}">
-                    {{ pe if row['P/E'] is not none else 'N/A' }} <span class="icon">{{ '✔️' if pe_good else '❌' }}</span>
-                </td>
-                <td class="{{ 'positive' if pb_good else 'negative' }}">
-                    {{ pb if row['P/B'] is not none else 'N/A' }} <span class="icon">{{ '✔️' if pb_good else '❌' }}</span>
-                </td>
-                <td class="{{ 'positive' if dy_good else 'negative' }}">
-                    {{ dy if row['Dividend Yield'] is not none else 'N/A' }} <span class="icon">{{ '✔️' if dy_good else '❌' }}</span>
-                </td>
-                <td class="score-cell">{{ score }} / 6</td>
-            </tr>
-            {% endfor %}
-        </tbody>
+      <thead>
+        <tr>
+          <th>Stock</th>
+          <th title="PEG Ratio: Valuation vs Growth (≤1.5 is good)">PEG</th>
+          <th title="Return on Equity (≥15% is good)">ROE (%)</th>
+          <th title="Debt/Equity Ratio (≤0.5 is good)">Debt/Equity</th>
+          <th title="Price to Earnings Ratio (≤15 is value-oriented)">P/E</th>
+          <th title="Price to Book Ratio (≤1.5 is considered good)">P/B</th>
+          <th title="Annual Dividend Yield (≥2% is healthy)">
+            Dividend Yield (%)
+          </th>
+          <th title="Number of positive fundamentals">Score</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in fundamentals %} {% set peg = row.PEG | default('0') |
+        float %} {% set roe = row.ROE | default('0') | float %} {% set de =
+        row['Debt/Equity'] | default('0') | float %} {% set pe = row['P/E'] |
+        default('0') | float %} {% set pb = row['P/B'] | default('0') | float %}
+        {% set dy = row['Dividend Yield'] | default('0') | float %} {% set
+        peg_good = peg <= threshold['PEG'] %} {% set roe_good = roe >=
+        threshold['ROE'] %} {% set de_good = de <= threshold['Debt/Equity'] %}
+        {% set pe_good = pe <= threshold['P/E'] %} {% set pb_good = pb <=
+        threshold['P/B'] %} {% set dy_good = dy >= threshold['Dividend Yield']
+        %} {% set score = [peg_good, roe_good, de_good, pe_good, pb_good,
+        dy_good] | select('equalto', True) | list | length %} {% if score == 6
+        %} {% set row_class = 'excellent' %} {% elif score >= 4 %} {% set
+        row_class = 'average' %} {% else %} {% set row_class = 'poor' %} {%
+        endif %}
+        <tr class="{{ row_class }}">
+          <td>{{ row.Stock }}</td>
+          <td class="{{ 'positive' if peg_good else 'negative' }}">
+            {{ peg }} <span class="icon">{{ '✔️' if peg_good else '❌' }}</span>
+          </td>
+          <td class="{{ 'positive' if roe_good else 'negative' }}">
+            {{ roe if row.ROE is not none else 'N/A' }}
+            <span class="icon">{{ '✔️' if roe_good else '❌' }}</span>
+          </td>
+          <td class="{{ 'positive' if de_good else 'negative' }}">
+            {{ de if row['Debt/Equity'] is not none else 'N/A' }}
+            <span class="icon">{{ '✔️' if de_good else '❌' }}</span>
+          </td>
+          <td class="{{ 'positive' if pe_good else 'negative' }}">
+            {{ pe if row['P/E'] is not none else 'N/A' }}
+            <span class="icon">{{ '✔️' if pe_good else '❌' }}</span>
+          </td>
+          <td class="{{ 'positive' if pb_good else 'negative' }}">
+            {{ pb if row['P/B'] is not none else 'N/A' }}
+            <span class="icon">{{ '✔️' if pb_good else '❌' }}</span>
+          </td>
+          <td class="{{ 'positive' if dy_good else 'negative' }}">
+            {{ dy if row['Dividend Yield'] is not none else 'N/A' }}
+            <span class="icon">{{ '✔️' if dy_good else '❌' }}</span>
+          </td>
+          <td class="score-cell">{{ score }} / 6</td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
 
     <a href="{{ url_for('portfolio_view') }}">← Back to Portfolio</a>
-</body>
+  </body>
 </html>
