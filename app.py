@@ -343,25 +343,27 @@ def evaluate_health(fund_df):
         verdicts.append({'Stock': row['Stock'], 'Score': score, 'Verdict': verdict, 'Notes': ", ".join(notes)})
     return pd.DataFrame(verdicts)
 
+
 def create_health_chart(health_df):
+    # Strip emojis (anything non-alphabetic at the start)
+    health_df['Verdict'] = health_df['Verdict'].str.replace(r'^[^\w\s]+', '', regex=True).str.strip()
+
     counts = health_df['Verdict'].value_counts()
+
     labels = [f"{v} ({counts[v]})" for v in counts.index]
     sizes = [counts[v] for v in counts.index]
 
-    # Assign consistent colors based on verdict type
+    # Plain verdict to color mapping
     color_map = {
-                '✅ Healthy': '#28a745',         # Green
-                '⚠️ Needs Attention': '#ffc107',  # Yellow
-                '❌ Weak': '#dc3545'              # Red
-                }
+        'Healthy': '#28a745',         # Green
+        'Needs Attention': '#ffc107', # Yellow
+        'Weak': '#dc3545'             # Red
+    }
 
-    # Ensure correct mapping even if other verdicts are introduced
-    colors = [color_map.get(v, "#6c757d") for v in counts.index]  # default: grey
+    colors = [color_map.get(v, "#6c757d") for v in counts.index]
 
-    fig, ax = plt.subplots(figsize=(8, 6))  # Larger figure
-
-    # [left, bottom, width, height]
-    ax.set_position([0.25, 0.1, 0.6, 0.8]) 
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.set_position([0.25, 0.1, 0.6, 0.8])
 
     wedges, texts, autotexts = ax.pie(
         sizes,
@@ -373,23 +375,22 @@ def create_health_chart(health_df):
         shadow=True,
         explode=[0.03] * len(sizes)
     )
-    # Legend to the left of pie chart
+
     ax.legend(
         wedges,
         counts.index,
         title="Health Status",
         loc="center right",
-        bbox_to_anchor=(-0.15, 0.5),  # Position it left of the pie
+        bbox_to_anchor=(-0.15, 0.5),
         fontsize='large',
         title_fontsize='x-large'
     )
-    plt.title('Portfolio Health Summary', fontsize=16)
+
+    plt.title('Health Chart', fontsize=16)
     plt.tight_layout()
     plt.savefig('static/health_distribution.png', bbox_inches='tight')
     plt.close()
-
-
-
+    
 #Mutual funds
 def update_mf_portfolio():
     response = requests.get(NAV_URL)
@@ -588,4 +589,3 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     #app.run(host='0.0.0.0', port=port)
     app.run(debug=True,port=port)
-
