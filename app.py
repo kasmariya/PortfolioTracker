@@ -577,7 +577,7 @@ def mf_chart_view():
     plt.tight_layout()
 
     chart_path = "static/piechart.png"
-    plt.savefig(chart_path)
+    plt.savefig(chart_path, bbox_inches='tight')
     plt.close()
     return render_template("mfchart.html", chart_path=chart_path)
 
