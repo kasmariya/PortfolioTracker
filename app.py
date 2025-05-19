@@ -109,14 +109,14 @@ portfolio = {
 NAV_URL = "https://www.amfiindia.com/spages/NAVAll.txt"
 
 mfportfolio = [
-    {"folio": "5137979", "amfi_code": "119242", "scheme": "DSP ELSS Tax Saver Fund - Direct Plan - Growth", "invested": 285000.00, "balanced_units": 2666.080},
-    {"folio": "16714214", "amfi_code": "119700", "scheme": "SBI Infrastructure Fund - Direct Plan - Growth", "invested": 202000.00, "balanced_units": 4072.150},
-    {"folio": "1018550203", "amfi_code": "119514", "scheme": "Aditya Birla Sun Life Infrastructure Fund - PLAN - Growth - Direct Plan", "invested": 136222.31, "balanced_units": 1458.720},
-    {"folio": "306653", "amfi_code": "131580", "scheme": "360 ONE Focused Equity Fund Direct Plan Growth", "invested": 97660.56, "balanced_units": 1942.370},
+    {"folio": "5137979", "amfi_code": "119242", "scheme": "DSP ELSS Tax Saver Fund - Direct Growth", "invested": 285000.00, "balanced_units": 2666.080},
+    {"folio": "16714214", "amfi_code": "119700", "scheme": "SBI Infrastructure Fund - Direct Growth", "invested": 202000.00, "balanced_units": 4072.150},
+    {"folio": "1018550203", "amfi_code": "119514", "scheme": "Aditya Birla Sun Life Infrastructure Fund - Direct Growth", "invested": 136222.31, "balanced_units": 1458.720},
+    {"folio": "306653", "amfi_code": "131580", "scheme": "360 ONE Focused Equity Fund - Direct Growth", "invested": 97660.56, "balanced_units": 1942.370},
     {"folio": "3083144", "amfi_code": "151113", "scheme": "HSBC Value Fund - Direct Growth", "invested": 78000.00, "balanced_units": 679.130},
-    {"folio": "7997047725", "amfi_code": "143783", "scheme": "Mirae Asset Healthcare Fund - Direct Plan", "invested": 71996.40, "balanced_units": 1803.005},
-    {"folio": "599364433105", "amfi_code": "120731", "scheme": "UTI Transportation & Logistics Fund - Direct Plan", "invested": 72000.00, "balanced_units": 248.059},
-    {"folio": "15387214", "amfi_code": "119769", "scheme": "Kotak India EQ Contra Fund - Direct Plan - Growth", "invested": 68000.00, "balanced_units": 397.700},
+    {"folio": "7997047725", "amfi_code": "143783", "scheme": "Mirae Asset Healthcare Fund - Direct Growth", "invested": 71996.40, "balanced_units": 1803.005},
+    {"folio": "599364433105", "amfi_code": "120731", "scheme": "UTI Transportation & Logistics Fund - Direct Growth", "invested": 72000.00, "balanced_units": 248.059},
+    {"folio": "15387214", "amfi_code": "119769", "scheme": "Kotak India EQ Contra Fund - Direct Growth", "invested": 68000.00, "balanced_units": 397.700},
 ]
 
 # Fundamental Thresholds for stocks (In comparison to Nifty 50 & Sensex index values)
