@@ -73,11 +73,7 @@
         color: red;
         font-weight: bold;
       }
-
-      .icon {
-        margin-left: 5px;
-      }
-
+      
       a {
         display: inline-block;
         margin-top: 20px;
@@ -152,34 +148,28 @@
         <tr class="{{ row_class }}">
           <td>{{ row.Stock }}</td>
           <td class="{{ 'positive' if peg_good else 'negative' }}">
-            {{ peg }} <span class="icon">{{ '✔️' if peg_good else '❌' }}</span>
+            {{ peg }}
           </td>
           <td class="{{ 'positive' if roe_good else 'negative' }}">
             {{ roe if row.ROE is not none else 'N/A' }}
-            <span class="icon">{{ '✔️' if roe_good else '❌' }}</span>
           </td>
           <td class="{{ 'positive' if de_good else 'negative' }}">
             {{ de if row['Debt/Equity'] is not none else 'N/A' }}
-            <span class="icon">{{ '✔️' if de_good else '❌' }}</span>
           </td>
           <td class="{{ 'positive' if pe_good else 'negative' }}">
             {{ pe if row['P/E'] is not none else 'N/A' }}
-            <span class="icon">{{ '✔️' if pe_good else '❌' }}</span>
           </td>
           <td class="{{ 'positive' if pb_good else 'negative' }}">
             {{ pb if row['P/B'] is not none else 'N/A' }}
-            <span class="icon">{{ '✔️' if pb_good else '❌' }}</span>
           </td>
           <td class="{{ 'positive' if dy_good else 'negative' }}">
             {{ dy if row['Dividend Yield'] is not none else 'N/A' }}
-            <span class="icon">{{ '✔️' if dy_good else '❌' }}</span>
           </td>
           <td class="score-cell">{{ score }} / 6</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
-
     <a href="{{ url_for('portfolio_view') }}">← Back to Portfolio</a>
   </body>
 </html>
