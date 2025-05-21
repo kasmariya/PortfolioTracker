@@ -1,201 +1,308 @@
 <!DOCTYPE html>
 <html>
-
-<head>
+  <head>
     <title>Mutual Fund Portfolio</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
 
-        .header-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
+      .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
 
-        .user-info {
-            text-align: right;
-        }
+      .user-info {
+        text-align: right;
+      }
 
-        .user-info h1 {
-            margin: 0;
-            font-size: 18px;
-        }
+      .user-info h1 {
+        margin: 0;
+        font-size: 18px;
+      }
 
-        .user-info a {
-            display: inline-block;
-            margin-top: 10px;
-            font-size: 14px;
-            color: #007BFF;
-        }
+      .user-info a {
+        display: inline-block;
+        margin-top: 10px;
+        font-size: 14px;
+        color: #007bff;
+      }
 
-        .user-info a:hover {
-            text-decoration: underline;
-        }
+      .user-info a:hover {
+        text-decoration: underline;
+      }
 
-        .portfolio-overview {
-            flex-grow: 1;
-            text-align: left;
-        }
+      .portfolio-overview {
+        flex-grow: 1;
+        text-align: left;
+      }
 
-        h1 {
-            color: #333;
-            margin: 0;
-        }
+      h1 {
+        color: #333;
+        margin: 0;
+      }
 
-        .summary {
-            display: flex;
-            justify-content: space-between;
-            width: 50%;
-            text-align: left;
-            font-size: 16px;
-        }
+      .summary {
+        display: flex;
+        justify-content: space-between;
+        width: 50%;
+        text-align: left;
+        font-size: 16px;
+      }
 
-        .gain {
-            color: green;
-            font-weight: bold;
-        }
+      .gain {
+        color: green;
+        font-weight: bold;
+      }
 
-        .loss {
-            color: red;
-            font-weight: bold;
-        }
+      .loss {
+        color: red;
+        font-weight: bold;
+      }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            table-layout: fixed;
-        }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        table-layout: fixed;
+      }
 
-        th,
-        td {
-            padding: 10px;
-            text-align: right;
-            border: 1px solid #ccc;
-            word-wrap: break-word;
-        }
+      th,
+      td {
+        padding: 10px;
+        text-align: right;
+        border: 1px solid #ccc;
+        word-wrap: break-word;
+      }
 
-        th {
-            background-color: #f0f0f0;
-        }
+      th {
+        background-color: #f0f0f0;
+      }
 
-        td:first-child,
-        th:first-child {
-            text-align: left;
-        }
+      td:first-child,
+      th:first-child {
+        text-align: left;
+      }
 
-        tr.gain-row {
-            background-color: #e6f4ea;
-        }
+      tr.gain-row {
+        background-color: #e6f4ea;
+      }
 
-        tr.loss-row {
-            background-color: #fbeaea;
-        }
+      tr.loss-row {
+        background-color: #fbeaea;
+      }
 
-        tr:hover {
-            background-color: #f9f9f9;
-        }
+      tr:hover {
+        background-color: #f9f9f9;
+      }
 
-        a {
-            margin-right: 10px;
-            text-decoration: none;
-            color: #007BFF;
-        }
+      a {
+        margin-right: 10px;
+        text-decoration: none;
+        color: #007bff;
+      }
 
-        a:hover {
-            text-decoration: underline;
-        }
+      a:hover {
+        text-decoration: underline;
+      }
+      .row-buttons button {
+        padding: 6px 12px;
+        margin: 2px;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+
+      .edit-btn {
+        background-color: #007bff;
+        color: white;
+      }
+
+      .edit-btn:hover {
+        background-color: #0056b3;
+      }
+
+      .ok-btn {
+        background-color: #28a745;
+        color: white;
+      }
+
+      .ok-btn:hover {
+        background-color: #218838;
+      }
+
+      .cancel-btn {
+        background-color: #dc3545;
+        color: white;
+      }
+
+      .cancel-btn:hover {
+        background-color: #c82333;
+      }
     </style>
-</head>
+  </head>
 
-<body>
+  <body>
     <div class="header-container">
-        <div class="portfolio-overview">
-            <h1>Mutual Fund Portfolio</h1>
-        </div>
-        <div class="user-info">
-            <h1>Logged in as: {{ current_user.username }}</h1>
-            <a href="{{ url_for('logout') }}">Logout</a>
-        </div>
+      <div class="portfolio-overview">
+        <h1>Mutual Fund Portfolio</h1>
+      </div>
+      <div class="user-info">
+        <h1>Logged in as: {{ current_user.username }}</h1>
+        <a href="{{ url_for('logout') }}">Logout</a>
+      </div>
     </div>
     <div class="summary">
-        <p><strong>Total Invested:</strong> <span class="maskable">{{ total_invested }}</span></p>
-        <p><strong>Total Market Value:</strong> <span class="maskable">{{ total_market_value }}</span></p>
-        <p><strong>Gain/Loss:</strong>
-            <span class="maskable {{ 'gain' if total_gain_loss|replace(',', '')|float >= 0 else 'loss' }}">
-                {{ total_gain_loss }}&nbsp;({{ net_gain_pct | inr_plain }}%)
-            </span>
-        </p>
+      <p>
+        <strong>Total Invested:</strong>
+        <span class="maskable">{{ total_invested }}</span>
+      </p>
+      <p>
+        <strong>Total Market Value:</strong>
+        <span class="maskable">{{ total_market_value }}</span>
+      </p>
+      <p>
+        <strong>Gain/Loss:</strong>
+        <span class="maskable {{ 'gain' if total_gain_loss >= 0 else 'loss' }}">
+          {{ total_gain_loss | inr }}&nbsp;({{ net_gain_pct | inr_plain }}%)
+        </span>
+      </p>
     </div>
     <table>
-        <thead>
-            <tr>
-                <th>Folio</th>
-                <th>Scheme</th>
-                <th>NAV Date</th>
-                <th>Units</th>
-                <th>Invested (₹)</th>
-                <th>NAV</th>
-                <th>Market Value (₹)</th>
-                <th>Gain/Loss (₹)</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for fund in portfolio %}
-            <tr class="{{ 'gain-row' if fund.gain_loss >= 0 else 'loss-row' }}">
-                <td>
-                    <span class="maskable">{{ fund.folio }}</span>
-                </td>
-                <td>{{ fund.scheme }}</td>
-                <td>{{ fund.nav_date }}</td>
-                <td>
-                    <span class="maskable">{{ fund.balanced_units | inr_plain }}</span>
-                </td>
-                <td>
-                    <span class="maskable">{{ fund.invested | inr_plain }}</span>
-                </td>
-                <td>{{ fund.nav | inr_plain }}</td>
-                <td>
-                    <span class="maskable">{{ fund.market_value | inr_plain }}</span>
-                </td>
-                <td class="{{ 'gain' if fund.gain_loss >= 0 else 'loss' }}">
-                    <span class="maskable">{{ fund.gain_loss | inr_plain }}</span><br>
-                    <small class="{{ 'gain' if fund.gain_loss >= 0 else 'loss' }}">
-                        ({{ (fund.gain_loss / fund.invested * 100) | inr_plain }}%)
-                    </small>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
+      <thead>
+        <tr>
+          <th>Folio</th>
+          <th>Scheme</th>
+          <th>NAV Date</th>
+          <th>Units</th>
+          <th>Invested (₹)</th>
+          <th>NAV</th>
+          <th>Market Value (₹)</th>
+          <th>Gain/Loss (₹)</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fund in portfolio %}
+        <tr
+          class="{{ 'gain-row' if fund.gain_loss >= 0 else 'loss-row' }}"
+          data-folio="{{ fund.folio }}"
+        >
+          <td>
+            <span class="maskable">{{ fund.folio }}</span>
+          </td>
+          <td>{{ fund.scheme }}</td>
+          <td>{{ fund.nav_date }}</td>
+          <td>
+            <span class="maskable view-field"
+              >{{ fund.balanced_units | inr_plain }}</span
+            >
+            <input
+              class="edit-field edit-units"
+              type="number"
+              step="0.0001"
+              value="{{ fund.balanced_units }}"
+              style="display: none; width: 100%"
+            />
+          </td>
+          <td>
+            <span class="maskable view-field"
+              >{{ fund.invested | inr_plain }}</span
+            >
+            <input
+              class="edit-field edit-invested"
+              type="number"
+              value="{{ fund.invested }}"
+              style="display: none; width: 100%"
+            />
+          </td>
+          <td>{{ fund.nav | inr_plain }}</td>
+          <td>
+            <span class="maskable">{{ fund.market_value | inr_plain }}</span>
+          </td>
+          <td class="{{ 'gain' if fund.gain_loss >= 0 else 'loss' }}">
+            <span class="maskable">{{ fund.gain_loss | inr_plain }}</span><br />
+            <small class="{{ 'gain' if fund.gain_loss >= 0 else 'loss' }}">
+              ({{ (fund.gain_loss / fund.invested * 100) | inr_plain }}%)
+            </small>
+          </td>
+          <td class="row-buttons">
+            <button class="edit-btn">Edit</button>
+            <button class="ok-btn" style="display: none">OK</button>
+            <button class="cancel-btn" style="display: none">Cancel</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
     <!-- Masking logic -->
     <script>
-        let masked = sessionStorage.getItem('mask') === 'true';
+      let masked = sessionStorage.getItem("mask") === "true";
 
-        function applyMask() {
-            document.querySelectorAll('.maskable').forEach(el => {
-                if (masked) {
-                    if (!el.dataset.original) {
-                        el.dataset.original = el.textContent;
-                    }
-                    el.textContent = '****';
-                } else {
-                    if (el.dataset.original) {
-                        el.textContent = el.dataset.original;
-                    }
-                }
-            });
-        }
+      function applyMask() {
+        document.querySelectorAll(".maskable").forEach((el) => {
+          if (masked) {
+            if (!el.dataset.original) {
+              el.dataset.original = el.textContent;
+            }
+            el.textContent = "****";
+          } else {
+            if (el.dataset.original) {
+              el.textContent = el.dataset.original;
+            }
+          }
+        });
+      }
+      window.addEventListener("DOMContentLoaded", applyMask);
 
-        window.addEventListener('DOMContentLoaded', applyMask);
+      document.querySelectorAll(".edit-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const row = btn.closest("tr");
+          row
+            .querySelectorAll(".view-field")
+            .forEach((el) => (el.style.display = "none"));
+          row
+            .querySelectorAll(".edit-field")
+            .forEach((el) => (el.style.display = "inline-block"));
+          row.querySelector(".edit-btn").style.display = "none";
+          row.querySelector(".ok-btn").style.display = "inline-block";
+          row.querySelector(".cancel-btn").style.display = "inline-block";
+        });
+      });
+
+      document.querySelectorAll(".cancel-btn").forEach((btn) => {
+        btn.addEventListener("click", () => location.reload());
+      });
+
+      document.querySelectorAll(".ok-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const row = btn.closest("tr");
+          const folio = row.dataset.folio;
+          const balanced_units = row.querySelector(".edit-units").value;
+          const invested = row.querySelector(".edit-invested").value;
+
+          fetch("/update_mf", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              folio: folio,
+              balanced_units: balanced_units,
+              invested: invested,
+            }),
+          }).then((res) => {
+            if (res.ok) location.reload();
+            else alert("Failed to update " + folio);
+          });
+        });
+      });
     </script>
 
     <a href="{{ url_for('mf_chart_view') }}">MF Allocation</a> |
     <a href="{{ url_for('networth_view') }}">← Back to Home</a>
-</body>
-
+  </body>
 </html>
