@@ -1,1 +1,62 @@
-
+[
+    {
+        "ticker": "TATAMOTORS.NS",
+        "quantity": 600.0,
+        "buy_price": 740.42,
+        "current_price": 740.42
+    },
+    {
+        "ticker": "JIOFIN.NS",
+        "quantity": 1550.0,
+        "buy_price": 228.49,
+        "current_price": 228.49
+    },
+    {
+        "ticker": "TCS.NS",
+        "quantity": 79.0,
+        "buy_price": 3472.58,
+        "current_price": 3472.58
+    },
+    {
+        "ticker": "TATAPOWER.NS",
+        "quantity": 550.0,
+        "buy_price": 318.05,
+        "current_price": 318.05
+    },
+    {
+        "ticker": "BEL.NS",
+        "quantity": 580.0,
+        "buy_price": 249.54,
+        "current_price": 249.54
+    },
+    {
+        "ticker": "IRCTC.NS",
+        "quantity": 225.0,
+        "buy_price": 715.0,
+        "current_price": 715.0
+    },
+    {
+        "ticker": "TITAN.NS",
+        "quantity": 50.0,
+        "buy_price": 3016.05,
+        "current_price": 3016.05
+    },
+    {
+        "ticker": "MOTHERSON.NS",
+        "quantity": 1000.0,
+        "buy_price": 124.14,
+        "current_price": 124.14
+    },
+    {
+        "ticker": "HINDUNILVR.NS",
+        "quantity": 50.0,
+        "buy_price": 2178.46,
+        "current_price": 2178.46
+    },
+    {
+        "ticker": "BAJAJHFL.NS",
+        "quantity": 690.0,
+        "buy_price": 114.77,
+        "current_price": 114.77
+    }
+]
