@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 import pickle
 import os
+import json
 import requests
 from flask import request, session, jsonify
 from bs4 import BeautifulSoup
@@ -17,6 +18,7 @@ matplotlib.use('Agg')  # Use non-interactive backend
 
 # Initialize Flask app and LoginManager
 app = Flask(__name__)
+STOCKS_FILE = 'stocks.json'
 app.secret_key = os.urandom(24)
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -91,33 +93,8 @@ def format_inr_no_symbol(value):
 app.jinja_env.filters['inr'] = format_inr      # Use in summaries
 app.jinja_env.filters['inr_plain'] = format_inr_no_symbol  # Use in tables
 
-#Stocks
-portfolio = {  
-    'TATAMOTORS.NS': (600, 740.42),
-    'JIOFIN.NS': (1550, 228.49),
-    'TCS.NS': (79, 3472.58),
-    'TATAPOWER.NS': (550, 318.05),
-    'BEL.NS': (580, 249.54),
-    'IRCTC.NS': (225, 715.00),
-    'TITAN.NS': (50, 3016.05),
-    'MOTHERSON.NS': (1000, 124.14),
-    'HINDUNILVR.NS': (50, 2178.46),
-    'BAJAJHFL.NS': (690, 114.77)
-}
-
 #Mutual Funds
 NAV_URL = "https://www.amfiindia.com/spages/NAVAll.txt"
-
-mfportfolio = [
-    {"folio": "5137979", "amfi_code": "119242", "scheme": "DSP ELSS Tax Saver Fund - Direct Growth", "invested": 285000.00, "balanced_units": 2666.080},
-    {"folio": "16714214", "amfi_code": "119700", "scheme": "SBI Infrastructure Fund - Direct Growth", "invested": 202000.00, "balanced_units": 4072.150},
-    {"folio": "1018550203", "amfi_code": "119514", "scheme": "Aditya Birla Sun Life Infrastructure Fund - Direct Growth", "invested": 136222.31, "balanced_units": 1458.720},
-    {"folio": "306653", "amfi_code": "131580", "scheme": "360 ONE Focused Equity Fund - Direct Growth", "invested": 97660.56, "balanced_units": 1942.370},
-    {"folio": "3083144", "amfi_code": "151113", "scheme": "HSBC Value Fund - Direct Growth", "invested": 78000.00, "balanced_units": 679.130},
-    {"folio": "7997047725", "amfi_code": "143783", "scheme": "Mirae Asset Healthcare Fund - Direct Growth", "invested": 71996.40, "balanced_units": 1803.005},
-    {"folio": "599364433105", "amfi_code": "120731", "scheme": "UTI Transportation & Logistics Fund - Direct Growth", "invested": 72000.00, "balanced_units": 248.059},
-    {"folio": "15387214", "amfi_code": "119769", "scheme": "Kotak India EQ Contra Fund - Direct Growth", "invested": 68000.00, "balanced_units": 397.700},
-]
 
 # Fundamental Thresholds for stocks (In comparison to Nifty 50 & Sensex index values)
 fundamentalThreshold = {
@@ -194,22 +171,28 @@ def calculate_manual_roe(ticker):
         return None
 
 # Core Functions
-def get_portfolio_data():
+def get_stocks_portfolio():
+    with open('stocks.json', 'r') as f:
+        portfolio_data = json.load(f)
+
     ticker_values = {}
     sector_values = defaultdict(float)
     rows = []
     total_cost = 0.0
     total_value = 0.0
 
-    for ticker, (qty, buy_price) in portfolio.items():
+    for stock in portfolio_data:
         try:
-            stock = yf.Ticker(ticker)
-            hist = stock.history(period="2d")
-            info = stock.info
+            ticker = stock['ticker']
+            qty = stock['quantity']
+            buy_price = stock['buy_price']
+
+            stock_obj = yf.Ticker(ticker)
+            hist = stock_obj.history(period="2d")
+            info = stock_obj.info
 
             if not hist.empty and len(hist) >= 1:
-                #current_price = hist['Close'].iloc[-1]
-                current_price = stock.fast_info["last_price"]
+                current_price = stock_obj.fast_info["last_price"]
                 market_value = current_price * qty
                 cost_value = buy_price * qty
                 gain_loss = market_value - cost_value
@@ -234,6 +217,7 @@ def get_portfolio_data():
 
     net_gain = total_value - total_cost
     return rows, ticker_values, sector_values, total_cost, net_gain
+
 
 def create_distribution_charts(ticker_values, sector_values):
     try:
@@ -285,17 +269,22 @@ def get_eps_growth_next_year(ticker):
         return None
 
 def fetch_fundamentals():
+    # Load portfolio from JSON
+    with open('stocks.json', 'r') as f:
+        portfolio_data = json.load(f)
+
     rows = []
-    for ticker in portfolio.keys():
+    for stock in portfolio_data:
+        ticker = stock.get('ticker')
         try:
-            stock = yf.Ticker(ticker)
-            info = stock.info
+            stock_obj = yf.Ticker(ticker)
+            info = stock_obj.info
 
             roe_value = info.get('returnOnEquity')
             if roe_value is None:
                 roe_value = calculate_manual_roe(ticker)
             else:
-                roe_value = roe_value * 100
+                roe_value = roe_value * 100 if roe_value else None
 
             div_yield = info.get('dividendYield')
             pe = info.get('trailingPE')
@@ -303,22 +292,24 @@ def fetch_fundamentals():
             debt_to_equity = info.get('debtToEquity')
             growth_rate = get_eps_growth_next_year(ticker)
             peg = info.get('pegRatio')
-            
-            if peg is None and pe and growth_rate and growth_rate != 0:
+
+            if (peg is None or peg == 0) and pe and growth_rate and growth_rate != 0:
                 peg = pe / growth_rate
 
             rows.append({
                 'Stock': ticker,
-                'PEG': round(peg,2) if peg else 'N/A',
-                'ROE': round(roe_value,2) if roe_value else 'N/A',
-                'Debt/Equity': round(debt_to_equity/100,2) if debt_to_equity else 'N/A',
-                'P/E': round(pe,2) if pe else 'N/A',
-                'P/B': round(pb,2) if pb else 'N/A',
-                'Dividend Yield': round(div_yield,2) if div_yield else 'N/A'
+                'PEG': round(peg, 2) if peg else 'N/A',
+                'ROE': round(roe_value, 2) if roe_value else 'N/A',
+                'Debt/Equity': round(debt_to_equity / 100, 2) if debt_to_equity else 'N/A',
+                'P/E': round(pe, 2) if pe else 'N/A',
+                'P/B': round(pb, 2) if pb else 'N/A',
+                'Dividend Yield': round(div_yield, 2) if div_yield else 'N/A' 
             })
         except Exception as e:
             print(f"Error fetching fundamentals for {ticker}: {e}")
+
     return pd.DataFrame(rows)
+
 
 def evaluate_health(fund_df):
     verdicts = []
@@ -392,7 +383,10 @@ def create_health_chart(health_df):
     plt.close()
     
 #Mutual funds
-def update_mf_portfolio():
+def get_mf_portfolio():
+    with open('mutualfunds.json', 'r') as f:
+        mfportfolio = json.load(f)
+
     response = requests.get(NAV_URL)
     nav_data = response.text.splitlines()
     nav_map = {}
@@ -426,7 +420,7 @@ def update_mf_portfolio():
             fund['gain_loss'] = 0.0
 
     total_gain_loss = round(total_market_value - total_invested, 2)
-    return total_invested, total_market_value, total_gain_loss
+    return mfportfolio, total_invested, total_market_value, total_gain_loss
 
 # Routes - Stocks
 
@@ -470,10 +464,10 @@ def networth_view():
     if 'mask' not in session:
         session['mask'] = True  # default to masking ON
 
-    _, _, _, total_cost, net_gain = get_portfolio_data()
+    _, _, _, total_cost, net_gain = get_stocks_portfolio()
     stock_value = total_cost + net_gain
 
-    _, mf_value, _ = update_mf_portfolio()
+    _, _, mf_value, _ = get_mf_portfolio()
 
     my_net_worth = stock_value + mf_value
 
@@ -521,7 +515,7 @@ def networth_view():
 @app.route('/portfolio')
 @login_required
 def portfolio_view():
-    rows, ticker_vals, sector_vals, total_cost, net_gain = get_portfolio_data()
+    rows, ticker_vals, sector_vals, total_cost, net_gain = get_stocks_portfolio()
     total_value=total_cost+net_gain
     formatted_total_cost = format_inr(total_cost)
     formatted_total_value = format_inr(total_value)
@@ -529,13 +523,13 @@ def portfolio_view():
     net_gain_pct = (net_gain / total_cost * 100)
 
     return render_template('portfolio.html',rows=rows,total_cost=formatted_total_cost,total_value=formatted_total_value,
-                           net_gain=formatted_net_gain, net_gain_pct=net_gain_pct)
+                           net_gain=net_gain, net_gain_pct=net_gain_pct)
 
 # Routes for charts, fundamentals, and health - all require login
 @app.route('/charts')
 @login_required
 def charts_view():
-    rows, ticker_vals, sector_vals, _, _ = get_portfolio_data()
+    rows, ticker_vals, sector_vals, _, _ = get_stocks_portfolio()
     create_distribution_charts(ticker_vals, sector_vals)
     return render_template('charts.html')
 
@@ -553,21 +547,45 @@ def health_view():
     create_health_chart(health_df)
     return render_template('health.html', health=health_df.to_dict('records'))
 
+# Edit stocks
+@app.route('/update_stock', methods=['POST'])
+def update_stock():
+    data = request.json
+    ticker = data['ticker']
+    new_quantity = float(data['quantity'])
+    new_buy_price = float(data['buy_price'])
+
+    with open(STOCKS_FILE, 'r') as f:
+        stocks = json.load(f)
+
+    for stock in stocks:
+        if stock['ticker'] == ticker:
+            stock['quantity'] = new_quantity
+            stock['buy_price'] = new_buy_price
+            break
+
+    with open(STOCKS_FILE, 'w') as f:
+        json.dump(stocks, f, indent=4)
+
+    return jsonify({'status': 'success'})
+
 # Routes - Mutual funds
 @app.route("/mfportfolio")
 @login_required
 def mf_portfolio_view():
-    total_invested, total_market_value, total_gain_loss = update_mf_portfolio()
+    mfportfolio, total_invested, total_market_value, total_gain_loss = get_mf_portfolio()
     net_gain_pct = (total_gain_loss / total_invested * 100)
     return render_template("mfportfolio.html", portfolio=mfportfolio,
                            total_invested=format_inr(total_invested),
                            total_market_value=format_inr(total_market_value),
-                           total_gain_loss=format_inr(total_gain_loss),
+                           total_gain_loss=total_gain_loss,
                            net_gain_pct=net_gain_pct)
+
 
 @app.route("/mfchart")
 @login_required
 def mf_chart_view():
+    mfportfolio, *_= get_mf_portfolio()
     labels = [fund["scheme"] for fund in mfportfolio if fund["market_value"] > 0]
     values = [fund["market_value"] for fund in mfportfolio if fund["market_value"] > 0]
 
@@ -580,6 +598,29 @@ def mf_chart_view():
     plt.savefig(chart_path, bbox_inches='tight')
     plt.close()
     return render_template("mfchart.html", chart_path=chart_path)
+
+# Edit Mutual funds
+@app.route('/update_mf', methods=['POST'])
+def update_mf():
+    data = request.get_json()
+    folio = data['folio']
+    new_units = float(data['balanced_units'])
+    new_invested = float(data['invested'])
+
+    with open('mutualfunds.json', 'r') as f:
+        funds = json.load(f)
+
+    for fund in funds:
+        if fund['folio'] == folio:
+            fund['balanced_units'] = new_units
+            fund['invested'] = new_invested
+            print('New units',new_units)
+            break
+
+    with open('mutualfunds.json', 'w') as f:
+        json.dump(funds, f, indent=4)
+
+    return jsonify({'status': 'success'})
 
 
 # ✅ Load cache once at startup
