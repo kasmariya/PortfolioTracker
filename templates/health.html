@@ -116,11 +116,7 @@
     </div>
 
     <h2>Health Summary Chart</h2>
-    <canvas
-      id="healthChart"
-      style="width: 100%; max-width: 700px; height: auto; margin: auto"
-    ></canvas>
-
+    <canvas id="healthChart" width="600" height="600" style="display: block; margin: auto;"></canvas>
     <h2>Health Breakdown</h2>
     <table>
       <thead>
@@ -168,7 +164,7 @@
           }]
         },
         options: {
-          responsive: true,
+          responsive: false,
           layout: {
             padding: 20
           },
