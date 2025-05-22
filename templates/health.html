@@ -141,33 +141,103 @@
       </tbody>
     </table>
     <!-- Chart.js Script -->
+    <!-- Add Chart.js and plugin scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+
     <script>
       const ctx = document.getElementById('healthChart').getContext('2d');
+
+      const chartLabels = ['Healthy', 'Needs Attention', 'Weak'];
+      const chartData = [{{ healthy_count }}, {{ attention_count }}, {{ weak_count }}];
+      const chartColors = ['#28a745', '#ffc107', '#dc3545'];
+
       const healthChart = new Chart(ctx, {
         type: 'pie',
         data: {
-          labels: ['Healthy', 'Needs Attention', 'Weak'],
+          labels: chartLabels,
           datasets: [{
             label: 'Portfolio Health',
-            data: [{{ healthy_count }}, {{ attention_count }}, {{ weak_count }}],
-            backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+            data: chartData,
+            backgroundColor: chartColors,
             borderColor: ['#c3e6cb', '#ffeeba', '#f5c6cb'],
             borderWidth: 1
           }]
         },
         options: {
           responsive: true,
+          layout: {
+            padding: 20
+          },
           plugins: {
             tooltip: {
               enabled: true
             },
             legend: {
-              position: 'bottom'
+              display: true,
+              position: 'left',
+              labels: {
+                boxWidth: 20,
+                padding: 10
+              },
+              title: {
+                display: true,
+                text: 'Health Status',
+                font: {
+                  size: 14,
+                  weight: 'bold'
+                },
+                padding: {
+                  bottom: 10
+                }
+              }
+            },
+            datalabels: {
+              color: 'white',
+              formatter: (value, ctx) => {
+                let sum = 0;
+                let dataArr = ctx.chart.data.datasets[0].data;
+                dataArr.forEach(val => { sum += val; });
+                let percentage = (value * 100 / sum).toFixed(1) + '%';
+                return percentage;
+              },
+              font: {
+                weight: 'bold',
+                size: 14
+              }
+            }
+          },
+          onClick: function(evt, elements) {
+            if (elements.length > 0) {
+              const chart = elements[0];
+              const label = this.data.labels[chart.index];
+              toggleTableFilter(label);
             }
           }
-        }
+        },
+        plugins: [ChartDataLabels]  // <-- register the datalabels plugin
       });
+
+      let activeFilter = null;
+
+      function toggleTableFilter(verdict) {
+        const rows = document.querySelectorAll("#healthTable tbody tr");
+
+        if (activeFilter === verdict) {
+          rows.forEach(row => row.style.display = "");
+          activeFilter = null;
+        } else {
+          rows.forEach(row => {
+            const cell = row.querySelector(".verdict");
+            if (cell && cell.textContent.trim() === verdict) {
+              row.style.display = "";
+            } else {
+              row.style.display = "none";
+            }
+          });
+          activeFilter = verdict;
+        }
+      }
     </script>
     <br />
     <a href="{{ url_for('portfolio_view') }}">← Back to Portfolio</a>
