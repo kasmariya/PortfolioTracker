@@ -38,7 +38,6 @@
         text-decoration: underline;
       }
 
-      /* Hover highlight entire row */
       tr:hover td {
         background-color: #f9f9f9;
       }
@@ -105,17 +104,6 @@
       a:hover {
         text-decoration: underline;
       }
-
-      .chart-container img {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        cursor: pointer;
-        border-radius: 8px;
-      }
-
-      .chart-container img:hover {
-        transform: scale(1.05);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-      }
     </style>
   </head>
   <body>
@@ -128,13 +116,7 @@
     </div>
 
     <h2>Health Summary Chart</h2>
-    <div class="chart-container">
-      <img
-        src="{{ url_for('static', filename='health_distribution.png') }}"
-        alt="Health Chart"
-        style="display: block; margin-left: auto; margin-right: auto"
-      />
-    </div>
+    <canvas id="healthChart" style="max-width: 500px; margin: auto"></canvas>
 
     <h2>Health Breakdown</h2>
     <table>
@@ -158,7 +140,35 @@
         {% endfor %}
       </tbody>
     </table>
-
+    <!-- Chart.js Script -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      const ctx = document.getElementById('healthChart').getContext('2d');
+      const healthChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['Healthy', 'Needs Attention', 'Weak'],
+          datasets: [{
+            label: 'Portfolio Health',
+            data: [{{ healthy_count }}, {{ attention_count }}, {{ weak_count }}],
+            backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+            borderColor: ['#c3e6cb', '#ffeeba', '#f5c6cb'],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            tooltip: {
+              enabled: true
+            },
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
+    </script>
     <br />
     <a href="{{ url_for('portfolio_view') }}">← Back to Portfolio</a>
   </body>
