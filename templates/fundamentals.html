@@ -73,7 +73,7 @@
         color: red;
         font-weight: bold;
       }
-      
+
       a {
         display: inline-block;
         margin-top: 20px;
@@ -90,7 +90,7 @@
         background-color: #f9f9f9;
       }
 
-    .excellent {
+      .excellent {
         background-color: #d4edda;
         color: #155724;
         border: 1px solid #c3e6cb;
@@ -98,21 +98,21 @@
         border-radius: 4px;
       }
 
-    .average {
+      .average {
         background-color: #fff3cd;
         color: #856404;
         border: 1px solid #ffeeba;
         padding: 0.5rem;
         border-radius: 4px;
-    }
+      }
 
-    .poor {
+      .poor {
         background-color: #f8d7da;
         color: #721c24;
         border: 1px solid #f5c6cb;
         padding: 0.5rem;
         border-radius: 4px;
-    }
+      }
     </style>
   </head>
   <body>
@@ -148,10 +148,9 @@
         {% set pe_good = pe <= threshold['P/E'] %} {% set pb_good = pb <=
         threshold['P/B'] %} {% set dy_good = dy >= threshold['Dividend Yield']
         %} {% set score = [peg_good, roe_good, de_good, pe_good, pb_good,
-        dy_good] | select('equalto', True) | list | length %} {% if score >=4
-        %} {% set row_class = 'excellent' %} {% elif score >= 2 %} {% set
-        row_class = 'average' %} {% else %} {% set row_class = 'poor' %} {%
-        endif %}
+        dy_good] | select('equalto', True) | list | length %} {% if score >=4 %}
+        {% set row_class = 'excellent' %} {% elif score >= 2 %} {% set row_class
+        = 'average' %} {% else %} {% set row_class = 'poor' %} {% endif %}
         <tr class="{{ row_class }}">
           <td>{{ row.Stock }}</td>
           <td class="{{ 'positive' if peg_good else 'negative' }}">
