@@ -116,7 +116,10 @@
     </div>
 
     <h2>Health Summary Chart</h2>
-    <canvas id="healthChart" style="max-width: 500px; margin: auto"></canvas>
+    <canvas
+      id="healthChart"
+      style="width: 100%; max-width: 700px; height: auto; margin: auto"
+    ></canvas>
 
     <h2>Health Breakdown</h2>
     <table>
@@ -134,7 +137,7 @@
         <tr class="{{ verdict_class }}">
           <td>{{ row.Stock }}</td>
           <td>{{ row.Score }}</td>
-          <td>{{ row.Verdict }}</td>
+          <td class="verdict">{{ row.Verdict }}</td>
           <td>{{ row.Notes }}</td>
         </tr>
         {% endfor %}
