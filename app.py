@@ -25,6 +25,8 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 
 # User class (validate login details with the stored data in credential.txt)
+
+
 class User:
     def __init__(self, id, username, password_hash):
         self.id = id
@@ -82,18 +84,24 @@ def load_user(user_id):
     return User.get(int(user_id))
 
 # Currentcy Format - with ₹ symbol
+
+
 def format_inr(value):
-    return format_currency(value, 'INR', locale='en_IN').replace(u'\xa0', u' ')  # To ensure spacing is correct
+    # To ensure spacing is correct
+    return format_currency(value, 'INR', locale='en_IN').replace(u'\xa0', u' ')
 
 # For tables — no ₹ symbol
+
+
 def format_inr_no_symbol(value):
-        return format_decimal(value, locale='en_IN', format=u'#,##,##0.00')
+    return format_decimal(value, locale='en_IN', format=u'#,##,##0.00')
+
 
 # Register the function as a Jinja2 filter
 app.jinja_env.filters['inr'] = format_inr      # Use in summaries
 app.jinja_env.filters['inr_plain'] = format_inr_no_symbol  # Use in tables
 
-#Mutual Funds
+# Mutual Funds
 NAV_URL = "https://www.amfiindia.com/spages/NAVAll.txt"
 
 # Fundamental Thresholds for stocks (In comparison to Nifty 50 & Sensex index values)
@@ -110,8 +118,8 @@ fundamentalThreshold = {
 indian_indices = {
     "SENSEX": "^BSESN",
     "NIFTY 50": "^NSEI",
-    "NIFTY MIDCAP 100": "NIFTY_MIDCAP_100.NS",  
-    "NIFTY SMALLCAP 100": "^CNXSC",             
+    "NIFTY MIDCAP 100": "NIFTY_MIDCAP_100.NS",
+    "NIFTY SMALLCAP 100": "^CNXSC",
     "NIFTY BANK": "^NSEBANK",
     "NIFTY PHARMA": "^CNXPHARMA",
     "NIFTY IT": "^CNXIT",
@@ -123,17 +131,22 @@ CACHE_FILE = 'financials_cache.pkl'
 financials_cache = {}
 
 # Load/Save Cache
+
+
 def load_cache():
     global financials_cache
     if os.path.exists(CACHE_FILE):
         with open(CACHE_FILE, 'rb') as f:
             financials_cache = pickle.load(f)
 
+
 def save_cache():
     with open(CACHE_FILE, 'wb') as f:
         pickle.dump(financials_cache, f)
 
 # Manual ROE Calculation
+
+
 def calculate_manual_roe(ticker):
     try:
         if ticker not in financials_cache:
@@ -171,6 +184,8 @@ def calculate_manual_roe(ticker):
         return None
 
 # Core Functions
+
+
 def get_stocks_portfolio():
     with open('stocks.json', 'r') as f:
         portfolio_data = json.load(f)
@@ -223,7 +238,7 @@ def create_distribution_charts(ticker_values, sector_values):
     try:
         labels = list(ticker_values.keys())
         sizes = list(ticker_values.values())
-        plt.figure(figsize=(6,6))
+        plt.figure(figsize=(6, 6))
         plt.pie(sizes, labels=labels, autopct='%1.1f%%')
         plt.title('Stock-wise Portfolio')
         plt.savefig('static/stock_distribution.png', bbox_inches='tight')
@@ -231,7 +246,7 @@ def create_distribution_charts(ticker_values, sector_values):
 
         labels = list(sector_values.keys())
         sizes = list(sector_values.values())
-        plt.figure(figsize=(6,6))
+        plt.figure(figsize=(6, 6))
         plt.pie(sizes, labels=labels, autopct='%1.1f%%')
         plt.title('Sector-wise Portfolio')
         plt.savefig('static/sector_distribution.png', bbox_inches='tight')
@@ -268,6 +283,7 @@ def get_eps_growth_next_year(ticker):
         print("Error fetching EPS growth:", e)
         return None
 
+
 def fetch_fundamentals():
     # Load portfolio from JSON
     with open('stocks.json', 'r') as f:
@@ -303,7 +319,7 @@ def fetch_fundamentals():
                 'Debt/Equity': round(debt_to_equity / 100, 2) if debt_to_equity else 'N/A',
                 'P/E': round(pe, 2) if pe else 'N/A',
                 'P/B': round(pb, 2) if pb else 'N/A',
-                'Dividend Yield': round(div_yield, 2) if div_yield else 'N/A' 
+                'Dividend Yield': round(div_yield, 2) if div_yield else 'N/A'
             })
         except Exception as e:
             print(f"Error fetching fundamentals for {ticker}: {e}")
@@ -317,72 +333,40 @@ def evaluate_health(fund_df):
         score = 0
         notes = []
         # Based on Nifty 50 and BSE Index
-        if isinstance(row['PEG'], (int, float)) and row['PEG'] <= fundamentalThreshold['PEG']: score +=1
-        else: notes.append('High PEG')
-        if isinstance(row['ROE'], (int, float)) and row['ROE'] >= fundamentalThreshold['ROE']: score +=1
-        else: notes.append('Low ROE')
-        if isinstance(row['Debt/Equity'], (int, float)) and row['Debt/Equity'] <= fundamentalThreshold['Debt/Equity']: score +=1
-        else: notes.append('High Debt')
-        if isinstance(row['P/E'], (int, float)) and row['P/E'] <= fundamentalThreshold['P/E']: score +=1
-        else: notes.append('High P/E')
-        if isinstance(row['P/B'], (int, float)) and row['P/B'] <= fundamentalThreshold['P/B']: score +=1
-        else: notes.append('High P/B')
-        if isinstance(row['Dividend Yield'], (int, float)) and row['Dividend Yield'] >= fundamentalThreshold['Dividend Yield']: score +=1
-        else: notes.append('Low Dividend')
+        if isinstance(row['PEG'], (int, float)) and row['PEG'] <= fundamentalThreshold['PEG']:
+            score += 1
+        else:
+            notes.append('High PEG')
+        if isinstance(row['ROE'], (int, float)) and row['ROE'] >= fundamentalThreshold['ROE']:
+            score += 1
+        else:
+            notes.append('Low ROE')
+        if isinstance(row['Debt/Equity'], (int, float)) and row['Debt/Equity'] <= fundamentalThreshold['Debt/Equity']:
+            score += 1
+        else:
+            notes.append('High Debt')
+        if isinstance(row['P/E'], (int, float)) and row['P/E'] <= fundamentalThreshold['P/E']:
+            score += 1
+        else:
+            notes.append('High P/E')
+        if isinstance(row['P/B'], (int, float)) and row['P/B'] <= fundamentalThreshold['P/B']:
+            score += 1
+        else:
+            notes.append('High P/B')
+        if isinstance(row['Dividend Yield'], (int, float)) and row['Dividend Yield'] >= fundamentalThreshold['Dividend Yield']:
+            score += 1
+        else:
+            notes.append('Low Dividend')
 
-        verdict = '✅ Healthy' if score>=4 else '⚠️ Needs Attention' if score>=2 else '❌ Weak'
-        verdicts.append({'Stock': row['Stock'], 'Score': score, 'Verdict': verdict, 'Notes': ", ".join(notes)})
+        verdict = '✅ Healthy' if score >= 4 else '⚠️ Needs Attention' if score >= 2 else '❌ Weak'
+        verdicts.append({'Stock': row['Stock'], 'Score': score,
+                        'Verdict': verdict, 'Notes': ", ".join(notes)})
     return pd.DataFrame(verdicts)
 
 
-def create_health_chart(health_df):
-    # Strip emojis (anything non-alphabetic at the start)
-    health_df['Verdict'] = health_df['Verdict'].str.replace(r'^[^\w\s]+', '', regex=True).str.strip()
+# Mutual funds
 
-    counts = health_df['Verdict'].value_counts()
 
-    labels = [f"{v} ({counts[v]})" for v in counts.index]
-    sizes = [counts[v] for v in counts.index]
-
-    # Plain verdict to color mapping
-    color_map = {
-        'Healthy': '#28a745',         # Green
-        'Needs Attention': '#ffc107', # Yellow
-        'Weak': '#dc3545'             # Red
-    }
-
-    colors = [color_map.get(v, "#6c757d") for v in counts.index]
-
-    fig, ax = plt.subplots(figsize=(8, 6))
-    ax.set_position([0.25, 0.1, 0.6, 0.8])
-
-    wedges, texts, autotexts = ax.pie(
-        sizes,
-        labels=labels,
-        colors=colors,
-        autopct='%1.1f%%',
-        startangle=140,
-        textprops=dict(color="black"),
-        shadow=True,
-        explode=[0.03] * len(sizes)
-    )
-
-    ax.legend(
-        wedges,
-        counts.index,
-        title="Health Status",
-        loc="center right",
-        bbox_to_anchor=(-0.15, 0.5),
-        fontsize='large',
-        title_fontsize='x-large'
-    )
-
-    plt.title('Health Chart', fontsize=16)
-    plt.tight_layout()
-    plt.savefig('static/health_distribution.png', bbox_inches='tight')
-    plt.close()
-    
-#Mutual funds
 def get_mf_portfolio():
     with open('mutualfunds.json', 'r') as f:
         mfportfolio = json.load(f)
@@ -408,8 +392,10 @@ def get_mf_portfolio():
         if code in nav_map:
             fund['nav'] = nav_map[code]['nav']
             fund['nav_date'] = nav_map[code]['date']
-            fund['market_value'] = round(fund['balanced_units'] * fund['nav'], 2)
-            fund['gain_loss'] = round(fund['market_value'] - fund['invested'], 2)
+            fund['market_value'] = round(
+                fund['balanced_units'] * fund['nav'], 2)
+            fund['gain_loss'] = round(
+                fund['market_value'] - fund['invested'], 2)
 
             total_invested += fund['invested']
             total_market_value += fund['market_value']
@@ -425,6 +411,8 @@ def get_mf_portfolio():
 # Routes - Stocks
 
 # Sign-in and sign-out functionality
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -436,6 +424,7 @@ def login():
             return redirect(url_for('networth_view'))
         flash('Invalid username or password')
     return render_template('login.html')
+
 
 @app.route('/logout')
 def logout():
@@ -457,6 +446,8 @@ def update_mask():
     return jsonify({'success': True, 'mask': mask})
 
 # ✅ Add Net Worth view - only accessible if logged in
+
+
 @app.route('/')
 @app.route("/networth")
 @login_required
@@ -496,11 +487,12 @@ def networth_view():
                     'direction': 'flat'
                 }
             else:
-                index_data[name] = {'value': 'N/A', 'change': 0, 'direction': 'flat'}
+                index_data[name] = {'value': 'N/A',
+                                    'change': 0, 'direction': 'flat'}
 
         except Exception as e:
-            index_data[name] = {'value': 'N/A', 'change': 0, 'direction': 'flat'}
-
+            index_data[name] = {'value': 'N/A',
+                                'change': 0, 'direction': 'flat'}
 
     return render_template("mynetworth.html",
                            total_value=format_inr(stock_value),
@@ -508,24 +500,26 @@ def networth_view():
                            my_net_worth=format_inr(my_net_worth),
                            stock_raw="{:.2f}".format(stock_value),
                            mf_raw="{:.2f}".format(mf_value),
-                           mask=session['mask'],indices=index_data)
+                           mask=session['mask'], indices=index_data)
 
 
-# Portfolio view 
+# Portfolio view
 @app.route('/portfolio')
 @login_required
 def portfolio_view():
     rows, ticker_vals, sector_vals, total_cost, net_gain = get_stocks_portfolio()
-    total_value=total_cost+net_gain
+    total_value = total_cost+net_gain
     formatted_total_cost = format_inr(total_cost)
     formatted_total_value = format_inr(total_value)
     formatted_net_gain = format_inr(net_gain)
     net_gain_pct = (net_gain / total_cost * 100)
 
-    return render_template('portfolio.html',rows=rows,total_cost=formatted_total_cost,total_value=formatted_total_value,
+    return render_template('portfolio.html', rows=rows, total_cost=formatted_total_cost, total_value=formatted_total_value,
                            net_gain=net_gain, net_gain_pct=net_gain_pct)
 
 # Routes for charts, fundamentals, and health - all require login
+
+
 @app.route('/charts')
 @login_required
 def charts_view():
@@ -533,21 +527,40 @@ def charts_view():
     create_distribution_charts(ticker_vals, sector_vals)
     return render_template('charts.html')
 
+
 @app.route('/fundamentals')
 @login_required
 def fundamentals_view():
     fund_df = fetch_fundamentals()
     return render_template('fundamentals.html', fundamentals=fund_df.to_dict('records'), threshold=fundamentalThreshold)
 
+
 @app.route('/health')
 @login_required
 def health_view():
     fund_df = fetch_fundamentals()
     health_df = evaluate_health(fund_df)
-    create_health_chart(health_df)
-    return render_template('health.html', health=health_df.to_dict('records'))
+
+    # Clean up the Verdict column
+    health_df['Verdict'] = health_df['Verdict'].str.replace(
+        r'^[^\w\s]+', '', regex=True).str.strip()
+
+    # Count each category
+    healthy_count = (health_df['Verdict'] == 'Healthy').sum()
+    attention_count = (health_df['Verdict'] == 'Needs Attention').sum()
+    weak_count = (health_df['Verdict'] == 'Weak').sum()
+
+    return render_template(
+        'health.html',
+        health=health_df.to_dict('records'),
+        healthy_count=healthy_count,
+        attention_count=attention_count,
+        weak_count=weak_count
+    )
 
 # Edit stocks
+
+
 @app.route('/update_stock', methods=['POST'])
 def update_stock():
     data = request.json
@@ -570,6 +583,8 @@ def update_stock():
     return jsonify({'status': 'success'})
 
 # Routes - Mutual funds
+
+
 @app.route("/mfportfolio")
 @login_required
 def mf_portfolio_view():
@@ -585,9 +600,11 @@ def mf_portfolio_view():
 @app.route("/mfchart")
 @login_required
 def mf_chart_view():
-    mfportfolio, *_= get_mf_portfolio()
-    labels = [fund["scheme"] for fund in mfportfolio if fund["market_value"] > 0]
-    values = [fund["market_value"] for fund in mfportfolio if fund["market_value"] > 0]
+    mfportfolio, *_ = get_mf_portfolio()
+    labels = [fund["scheme"]
+              for fund in mfportfolio if fund["market_value"] > 0]
+    values = [fund["market_value"]
+              for fund in mfportfolio if fund["market_value"] > 0]
 
     fig, ax = plt.subplots(figsize=(10, 10))
     ax.pie(values, labels=labels, startangle=90, autopct='%1.1f%%')
@@ -600,6 +617,8 @@ def mf_chart_view():
     return render_template("mfchart.html", chart_path=chart_path)
 
 # Edit Mutual funds
+
+
 @app.route('/update_mf', methods=['POST'])
 def update_mf():
     data = request.get_json()
@@ -614,7 +633,7 @@ def update_mf():
         if fund['folio'] == folio:
             fund['balanced_units'] = new_units
             fund['invested'] = new_invested
-            print('New units',new_units)
+            print('New units', new_units)
             break
 
     with open('mutualfunds.json', 'w') as f:
@@ -628,5 +647,5 @@ load_cache()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    #app.run(host='0.0.0.0', port=port)
-    app.run(debug=True,port=port)
+    # app.run(host='0.0.0.0', port=port)
+    app.run(debug=True, port=port)
