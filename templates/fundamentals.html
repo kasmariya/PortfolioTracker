@@ -90,11 +90,6 @@
         background-color: #f9f9f9;
       }
 
-      .score-cell {
-        font-weight: bold;
-        background-color: #eef;
-      }
-
       .excellent {
         background-color: #d4edda;
       }
@@ -165,7 +160,7 @@
           <td class="{{ 'positive' if dy_good else 'negative' }}">
             {{ dy if row['Dividend Yield'] is not none else 'N/A' }}
           </td>
-          <td class="score-cell">{{ score }} / 6</td>
+          <td class="row_class">{{ score }} / 6</td>
         </tr>
         {% endfor %}
       </tbody>
