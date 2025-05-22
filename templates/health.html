@@ -105,6 +105,17 @@
       a:hover {
         text-decoration: underline;
       }
+
+      .chart-container img {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        cursor: pointer;
+        border-radius: 8px;
+      }
+
+      .chart-container img:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      }
     </style>
   </head>
   <body>
@@ -117,11 +128,13 @@
     </div>
 
     <h2>Health Summary Chart</h2>
-    <img
-      src="{{ url_for('static', filename='health_distribution.png') }}"
-      alt="Health Chart"
-      style="display: block; margin-left: auto; margin-right: auto"
-    />
+    <div class="chart-container">
+      <img
+        src="{{ url_for('static', filename='health_distribution.png') }}"
+        alt="Health Chart"
+        style="display: block; margin-left: auto; margin-right: auto"
+      />
+    </div>
 
     <h2>Health Breakdown</h2>
     <table>
