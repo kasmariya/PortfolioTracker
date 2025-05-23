@@ -236,19 +236,27 @@ def get_stocks_portfolio():
 
 def create_distribution_charts(ticker_values, sector_values):
     try:
+        # Common figure size and dpi for consistent images
+        fig_size = (10, 10)
+        dpi = 150
+
+        # Stock distribution pie chart
         labels = list(ticker_values.keys())
         sizes = list(ticker_values.values())
-        plt.figure(figsize=(6, 6))
+        plt.figure(figsize=fig_size, dpi=dpi)
         plt.pie(sizes, labels=labels, autopct='%1.1f%%')
-        plt.title('Stock-wise Portfolio')
+        plt.title('Stock-wise Portfolio', fontweight='bold',
+                  fontsize=14, color='navy')
         plt.savefig('static/stock_distribution.png', bbox_inches='tight')
         plt.close()
 
+        # Sector distribution pie chart
         labels = list(sector_values.keys())
         sizes = list(sector_values.values())
-        plt.figure(figsize=(6, 6))
+        plt.figure(figsize=fig_size, dpi=dpi)
         plt.pie(sizes, labels=labels, autopct='%1.1f%%')
-        plt.title('Sector-wise Portfolio')
+        plt.title('Sector-wise Portfolio', fontweight='bold',
+                  fontsize=14, color='navy')
         plt.savefig('static/sector_distribution.png', bbox_inches='tight')
         plt.close()
     except Exception as e:
